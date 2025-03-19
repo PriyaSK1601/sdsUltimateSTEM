@@ -1,0 +1,41 @@
+.login-container {
+    text-align: center;
+    margin-top: 50px;
+  }
+  
+  .input-field {
+    display: block;
+    margin: 10px auto;
+    padding: 10px;
+    width: 80%;
+    max-width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .auth-btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    background-color: #999da0;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .auth-btn:hover {
+    background-color: #0056b3;
+  }
+
+  .link {
+    color: #999da0; 
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  .link:hover {
+    color: #5d5f61; /* Change to a darker shade for hover effect */
+    text-decoration: underline;
+  }
+  
+  
