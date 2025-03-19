@@ -5,6 +5,7 @@ function Submission() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
+  const [image, setImage] = useState(null);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -14,19 +15,28 @@ function Submission() {
       return;
     }
 
-    const submissionData = { title, description };
+    const submissionData = { title, description, image};
     console.log("Submission Data:", submissionData);
 
     setMessage(`Submission Successful!`);
     setTitle("");
     setDescription("");
+    setImage(null);
     
+  };
+
+  const handleImageInput = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImage(file);
+    }
   };
 
   return (
     <div className="contact-form-container"> 
       <div className="contact-form">
-        <h2 className="heading">Submit Your Entry</h2>
+        <h2 className="heading">Tournament Submission</h2>
+        <h3 className="subheading">Submit your creative ideas here!</h3>
         <form onSubmit={handleSubmit}>
           <label>Title:</label>
           <input
@@ -44,6 +54,9 @@ function Submission() {
             placeholder="Enter description"
             required
           ></textarea>
+
+          <label>Upload an Image:</label>
+          <input type="file" accept="image/" onChange={handleImageInput} />
 
           <button type="submit">Submit</button>
         </form>
