@@ -17,9 +17,10 @@ function Submission() {
     const submissionData = { title, description };
     console.log("Submission Data:", submissionData);
 
-    setMessage(`"${title}" has been submitted!`);
+    setMessage(`Submission Successful!`);
     setTitle("");
     setDescription("");
+    
   };
 
   return (
