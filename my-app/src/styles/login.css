@@ -2,6 +2,7 @@
 .login-container {
   display: flex;
   justify-content: flex-end;
+  background-image: url("../assets/Login.png");
   align-items: center;
   height: 100vh;
   padding-right: 10%;
