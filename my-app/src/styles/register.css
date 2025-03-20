@@ -1,5 +1,5 @@
-/* Center login on the right side */
-.login-container {
+/* Align the signup form to the right side */
+.signup-container {
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -7,8 +7,8 @@
   padding-right: 10%;
 }
 
-/* Form styling */
-.login-form {
+/* Signup form styling */
+.signup-form {
   background: #fff;
   padding: 30px;
   border-radius: 8px;
@@ -35,7 +35,7 @@
   outline: none;
 }
 
-/* Auth button */
+/* Signup button */
 .auth-btn {
   width: 100%;
   padding: 12px;
@@ -65,12 +65,12 @@
 
 /* Adjustments for small screens */
 @media (max-width: 768px) {
-  .login-container {
+  .signup-container {
       justify-content: center;
       padding-right: 0;
   }
 
-  .login-form {
+  .signup-form {
       width: 90%;
       max-width: 350px;
   }

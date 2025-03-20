@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { auth, db } from "./firebase";
 import { setDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
+import "../styles/register.css"; // Import the CSS file
 
 function Register() {
   const [email, setEmail] = useState("");
@@ -15,19 +16,19 @@ function Register() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       const user = auth.currentUser;
-      console.log(user);
       if (user) {
         await setDoc(doc(db, "Users", user.uid), {
           email: user.email,
           firstName: fname,
           lastName: lname,
-          photo:""
+          photo: "",
         });
       }
       console.log("User Registered Successfully!!");
       toast.success("User Registered Successfully!!", {
         position: "top-center",
       });
+      window.location.href = "/profile"; // Redirect after successful registration
     } catch (error) {
       console.log(error.message);
       toast.error(error.message, {
@@ -37,61 +38,66 @@ function Register() {
   };
 
   return (
-    <form onSubmit={handleRegister}>
-      <h3>Sign Up</h3>
+    <div className="signup-container">
+      <form className="signup-form" onSubmit={handleRegister}>
+        <h3>Sign Up</h3>
 
-      <div className="mb-3">
-        <label>First name</label>
-        <input
-          type="text"
-          className="form-control"
-          placeholder="First name"
-          onChange={(e) => setFname(e.target.value)}
-          required
-        />
-      </div>
+        <div className="input-group">
+          <label>First Name</label>
+          <input
+            type="text"
+            className="input-field"
+            placeholder="First name"
+            value={fname}
+            onChange={(e) => setFname(e.target.value)}
+            required
+          />
+        </div>
 
-      <div className="mb-3">
-        <label>Last name</label>
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Last name"
-          onChange={(e) => setLname(e.target.value)}
-        />
-      </div>
+        <div className="input-group">
+          <label>Last Name</label>
+          <input
+            type="text"
+            className="input-field"
+            placeholder="Last name"
+            value={lname}
+            onChange={(e) => setLname(e.target.value)}
+          />
+        </div>
 
-      <div className="mb-3">
-        <label>Email address</label>
-        <input
-          type="email"
-          className="form-control"
-          placeholder="Enter email"
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
+        <div className="input-group">
+          <label>Email Address</label>
+          <input
+            type="email"
+            className="input-field"
+            placeholder="Enter email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-      <div className="mb-3">
-        <label>Password</label>
-        <input
-          type="password"
-          className="form-control"
-          placeholder="Enter password"
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
+        <div className="input-group">
+          <label>Password</label>
+          <input
+            type="password"
+            className="input-field"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
 
-      <div className="d-grid">
-        <button type="submit" className="btn btn-primary">
-          Sign Up
-        </button>
-      </div>
-      <p className="forgot-password text-right">
-        Already registered <a href="/login">Login</a>
-      </p>
-    </form>
+        <button type="submit" className="auth-btn">Sign Up</button>
+
+        <p className="already-registered">
+          Already registered? <a href="/login" className="link">Login</a>
+        </p>
+      </form>
+    </div>
   );
 }
+
 export default Register;
+
