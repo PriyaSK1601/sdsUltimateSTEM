@@ -32,7 +32,7 @@
 }
 
 .input-field:focus {
-  border-color: #0056b3;
+  border-color: #2d3032;
   outline: none;
 }
 
@@ -40,7 +40,7 @@
 .auth-btn {
   width: 100%;
   padding: 12px;
-  background-color: #007bff;
+  background-color: #666b70;
   color: white;
   font-size: 16px;
   border: none;
@@ -50,12 +50,12 @@
 }
 
 .auth-btn:hover {
-  background-color: #0056b3;
+  background-color: #848f9b;
 }
 
 /* Register link */
 .link {
-  color: #007bff;
+  color: #303234;
   font-weight: bold;
   text-decoration: none;
 }

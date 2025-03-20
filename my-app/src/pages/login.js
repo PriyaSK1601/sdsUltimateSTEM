@@ -15,7 +15,9 @@ function Login() {
       await signInWithEmailAndPassword(auth, email, password);
       console.log("User logged in Successfully");
       toast.success("User logged in Successfully", { position: "top-center" });
-      window.location.href = "/profile";
+      setTimeout(() => {
+        window.location.href = "/profile";
+      }, 1500);
     } catch (error) {
       console.log(error.code, error.message);
 
