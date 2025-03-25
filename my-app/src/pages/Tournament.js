@@ -19,6 +19,7 @@ function Tournament({ submissions }) {
                                         : "none",
                                 }}
                             ></div>
+                            <div className="card-content">
                                 <div className="category">{submission.category}</div>
                                 <div className="heading">{submission.title}</div>
                                 <div className="description">{submission.description}</div>
