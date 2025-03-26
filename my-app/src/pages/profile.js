@@ -5,28 +5,27 @@ import { auth } from "./firebase";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 
 function Profile() {
-  const [user, setUser] = useState(null); // Track user data
-  const navigate = useNavigate(); // Hook for navigation
+  const [user, setUser] = useState(null); 
+  const navigate = useNavigate(); 
 
   useEffect(() => {
-    // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-        setUser(currentUser); // Set the user data if logged in
+        setUser(currentUser);
       } else {
-        setUser(null); // Set user to null if logged out
+        setUser(null); 
       }
     });
 
     return () => {
-      // Clean up the listener on unmount
+      
       unsubscribe();
     };
   }, []);
 
   const handleLogout = () => {
     signOut(auth).then(() => {
-      navigate("/login"); // Navigate to login after logout
+      navigate("/login"); 
     });
   };
 
