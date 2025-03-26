@@ -1,7 +1,8 @@
 import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import { auth } from "./firebase";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import SignInwithGoogle from "./signInWIthGoogle";
 import "../styles/login.css"; 
 
@@ -13,13 +14,13 @@ function Login() {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      console.log("User logged in Successfully");
       toast.success("User logged in Successfully", { position: "top-center" });
-      window.location.href = "/profile";
+      setTimeout(() => {
+        window.location.href = "/profile";
+      }, 2000);
     } catch (error) {
       console.log(error.code, error.message);
 
-      // Custom error messages based on Firebase error codes
       if (error.code === "auth/wrong-password") {
         toast.error("Incorrect password. Please try again.", { position: "top-center" });
       } else if (error.code === "auth/user-not-found") {
@@ -34,6 +35,7 @@ function Login() {
 
   return (
     <div className="login-container">
+      <ToastContainer />
       <form className="login-form" onSubmit={handleSubmit}>
         <h3>Login</h3>
 
