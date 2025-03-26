@@ -16,8 +16,6 @@ import { Navigate } from "react-router-dom";
 
 
 
-
-
 function App() {
   const [user, setUser] = useState();
   useEffect(() => {
@@ -33,11 +31,12 @@ function App() {
           <Router>
             <Navbar />
             <Routes>
+              <Route path="/" exact element={<Home />} />
               <Route
                     path="/"
                     element={user ? <Navigate to="/profile" /> : <Login />}
               />
-              <Route path="/" exact element={<Home />} />
+              <Route path="/home" exact element={<Home />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<SignUp />} />
