@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import "../styles/Submission.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 import UploadIcon from "../assets/upload.png";
 import UploadedIcon from "../assets/uploaded.png";
 
@@ -19,7 +19,12 @@ function Submission({ onSubmit }) {
       return;
     }
 
-    const submissionData = { title, description, category, image: image ? URL.createObjectURL(image) : null };
+    const submissionData = {
+      title,
+      description,
+      category,
+      image: image ? URL.createObjectURL(image) : null,
+    };
     onSubmit(submissionData);
 
     setMessage("Submission Successful!");
@@ -37,31 +42,36 @@ function Submission({ onSubmit }) {
   };
 
   return (
-    <div className="contact-form-container">
-      <div className="contact-form">
-        <h2 className="heading">Tournament Submission</h2>
-        <h3 className="subheading">Submit your creative ideas here!</h3>
+    <div className="container d-flex justify-content-center align-items-center vh-100 bg-light">
+      <div className="card p-4 shadow-lg" style={{ maxWidth: "500px", width: "100%" }}>
+        <h2 className="text-center">Tournament Submission</h2>
+        <h5 className="text-center text-muted mb-4">Submit your creative ideas here!</h5>
         <form onSubmit={handleSubmit}>
-          <label>Title:</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter title"
-            required
-          />
-
-          <label>Description:</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter description"
-            required
-          ></textarea>
-
-          <div className="form-row">
+          <div className="mb-3">
+            <label className="form-label">Title:</label>
+            <input
+              type="text"
+              className="form-control"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter title"
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Description:</label>
+            <textarea
+              className="form-control"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter description"
+              required
+            ></textarea>
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Category:</label>
             <select
-              className="dropdown-menu"
+              className="form-select"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               required
@@ -72,30 +82,33 @@ function Submission({ onSubmit }) {
               <option value="Engineering">Engineering</option>
               <option value="Mathematics">Mathematics</option>
             </select>
-
-            <div className="upload-section">
-              <label>Image upload (optional):</label>
-              <div className="image-upload-container" onClick={() => fileInputRef.current.click()}>
-                { image ? (
-                  <img src={UploadedIcon} alt="Uploaded Icon" className="upload-icon" />
-                ) : (
-                  <img src={UploadIcon} alt="Upload Icon" className="upload-icon" />
-                )}
-              </div>
+          </div>
+          <div className="mb-3 text-center">
+            <label className="form-label d-block">Image Upload (optional):</label>
+            <div
+              className="border rounded p-3 d-inline-block"
+              onClick={() => fileInputRef.current.click()}
+              style={{ cursor: "pointer" }}
+            >
+              {image ? (
+                <img src={UploadedIcon} alt="Uploaded Icon" width={40} />
+              ) : (
+                <img src={UploadIcon} alt="Upload Icon" width={40} />
+              )}
             </div>
           </div>
-
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
             onChange={handleImageInput}
-            style={{ display: "none" }}
+            className="d-none"
           />
-
-          <button type="submit">Submit</button>
+          <div className="text-center">
+            <button type="submit" className="btn btn-dark">Submit</button>
+          </div>
         </form>
-        {message && <p className="submission-message">{message}</p>}
+        {message && <p className="text-center text-success mt-3">{message}</p>}
       </div>
     </div>
   );
