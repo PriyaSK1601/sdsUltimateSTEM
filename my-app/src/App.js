@@ -3,6 +3,8 @@ import Navbar from "./components/Navbar";
 import Profile from "./pages/profile";
 import Login from "./pages/login";
 import SignUp from "./pages/register"; 
+import Home from "./pages/Home";
+
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -25,6 +27,7 @@ function App() {
   });
   return (
     <div className="App">
+
       <div className="auth-wrapper">
         <div className="auth-inner">
           <Router>
@@ -34,6 +37,7 @@ function App() {
                     path="/"
                     element={user ? <Navigate to="/profile" /> : <Login />}
               />
+              <Route path="/" exact element={<Home />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<SignUp />} />

@@ -1,0 +1,66 @@
+.podium {
+  /*display: flex;*/
+  justify-content: center;
+  width: 90%;
+  border-radius: 20px;
+  height: 600px;
+  background-color: rgba(128, 128, 128, 0.268);
+  position: absolute;
+  top: 105%;
+}
+
+.podium h1 {
+  padding: 40px;
+  text-align: center;
+  height: 20px;
+}
+
+.podium p {
+  text-align: center;
+}
+
+.card {
+  position: relative;
+  top: 10%;
+  margin: 0 auto;
+  height: 300px;
+  width: 500px;
+  border-radius: 20px;
+  background-color: rgba(128, 128, 128, 0.569);
+}
+
+/*.left img {
+  height: 50px;
+  /*position: absolute;
+  top: 50%;
+  margin-left: 30%;
+  height: 50px;
+}*/
+.left img {
+  height: 50px;
+  position: absolute;
+  top: 40%;
+  margin-left: -75px;
+}
+
+.right img {
+  height: 50px;
+  position: absolute;
+  top: 40%;
+  margin-left: 107%;
+}
+
+/*This is just placeholder text --> to be deleted later!*/
+.card p {
+  color: white;
+  position: relative;
+  top: 50%;
+}
+
+/*.podiumContainer {
+  width: 100%;
+  height: 200px;
+  background-color: rgba(128, 128, 128, 0.534);
+  position: relative;
+  top: 50%;
+}*/

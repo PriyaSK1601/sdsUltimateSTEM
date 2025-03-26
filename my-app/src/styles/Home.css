@@ -1,0 +1,89 @@
+.home {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  display: flex;
+  width: 100%;
+  /*height: 230vh;*/
+  height: 200vh;
+  justify-content: center;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+.headerContainer {
+  width: 35%;
+  background-color: rgba(128, 128, 128, 0.268);
+  padding: 30px;
+  border-radius: 20px;
+  position: relative;
+  top: 125px;
+  right: 20%;
+  /*left: -100px;*/
+  height: 265px;
+  /*box-shadow: 0.05em 0.05em 0.9em #9c9c9c;*/
+}
+
+.headerContainer h1 {
+  text-align: center;
+  height: 70px;
+}
+
+.headerContainer p {
+  height: 70px;
+  width: 75%;
+  margin: 20px;
+}
+
+.headerContainerButton1 {
+  background-color: #a09f9f;
+  color: white;
+  padding: 15px;
+  margin: 20px;
+  width: 140px;
+  border-radius: 8px;
+  border: none;
+}
+
+.headerContainerButton2 {
+  background-color: #a09f9f;
+  color: white;
+  padding: 15px;
+  margin: 20px;
+  width: 140px;
+  margin-left: 30px;
+  border-radius: 8px;
+  border: none;
+}
+
+.headerContainer button:hover {
+  background-color: rgb(172, 171, 171);
+}
+
+.circle {
+  height: 350px;
+  width: 350px;
+  border-radius: 50%;
+  background-color: rgba(174, 173, 173, 0.597);
+  position: relative;
+  z-index: 1;
+  top: 12%;
+  left: 35%;
+  /*top: 150px;
+  right: -130px;*/
+  /*bottom: -150px;
+  right: -130px;*/
+}
+
+.circle img {
+  height: 450px;
+  position: relative;
+  top: -18%;
+  right: 37%;
+  /*display: flex;
+  position: sticky;*/
+  /*z-index: 1;
+  top: 20%;
+  right: -120%;*/
+  /*right: 195px;*/
+}
