@@ -1,0 +1,19 @@
+.profile-container {
+    text-align: center;
+    margin-top: 50px;
+  }
+  
+  .login-signup-btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    background-color: #999da0;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .login-signup-btn:hover {
+    background-color: #5d5f61;
+  }
+  
