@@ -11,7 +11,7 @@ function Navbar() {
         <img src={Logo} alt="Lightbulb logo" />
       </div>
       <div className="rightSide">
-        <Link to="/"> Home </Link>
+        <Link to="/home"> Home </Link>
         <Link to="/dashboard"> Dashboard </Link>
         <Link to="/tournament"> Tournament </Link>
         <Link to="/submission"> Submission </Link>
