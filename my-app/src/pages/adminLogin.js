@@ -15,7 +15,7 @@ function AdminLogin() {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success("Admin logged in Successfully", { position: "top-center" });
       setTimeout(() => {
-        window.location.href = "/adminProfile";
+        window.location.href = "/profile";
       }, 2000);
     } catch (error) {
       console.log(error.code, error.message);
