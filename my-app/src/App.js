@@ -4,6 +4,9 @@ import Profile from "./pages/profile";
 import Login from "./pages/login";
 import SignUp from "./pages/register"; 
 import Home from "./pages/Home";
+import ForgotPass from "./pages/forgotPass";
+import AdminLogin from "./pages/adminLogin";
+import AdminProfile from "./pages/adminProfile";
 
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
@@ -41,6 +44,14 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<SignUp />} />
+              <Route path= "/forgotPass" element={<ForgotPass />}/>
+              <Route path="/adminLogin" element={<AdminLogin />} />
+              <Route 
+    path="/admin-profile" 
+    element={
+      user ? <AdminProfile /> : <Navigate to="/admin-login" />
+    } 
+  />
             </Routes>
           </Router>
         </div>

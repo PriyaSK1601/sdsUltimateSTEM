@@ -1,0 +1,101 @@
+/* Center forgot password on the right side */
+.forgot-container {
+    display: flex;
+    justify-content: flex-end;
+    background-image: url("../assets/Login.png");
+    background-size: cover;
+    background-position: center;
+    align-items: center;
+    height: 100vh;
+    padding-right: 10%;
+  }
+  
+  /* Box styling */
+  .forgot-box {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 350px;
+    width: 100%;
+  }
+  
+  /* Title styling */
+  .forgot-title {
+    color: #242527;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+  
+  /* Form styling */
+  .forgot-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Input fields */
+  .input-group {
+    margin-bottom: 15px;
+  }
+  
+  .input-field {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: border-color 0.3s;
+  }
+  
+  .input-field:focus {
+    border-color: #242527;
+    outline: none;
+  }
+  
+  /* Auth button */
+  .auth-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #4b5056;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 10px;
+  }
+  
+  .auth-btn:hover {
+    background-color: #474b4f;
+  }
+  
+  /* Back link */
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: #454647;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  
+  .back-link:hover {
+    color: #242527;
+    text-decoration: underline;
+  }
+  
+  /* Adjustments for small screens */
+  @media (max-width: 768px) {
+    .forgot-container {
+        justify-content: center;
+        padding-right: 0;
+    }
+  
+    .forgot-box {
+        width: 90%;
+        max-width: 350px;
+    }
+  }
+

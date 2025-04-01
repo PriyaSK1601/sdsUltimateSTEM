@@ -67,6 +67,12 @@ function Login() {
 
         <p className="forgot-password">
           New user? <a href="/register" className="link">Register Here</a>
+          Admin? <a href="/adminLogin" className="link">Admin Login Here</a>
+        </p>
+
+        <p className="forgotPass">
+          <a href="/forgotPass" className="link">Forgot Password?</a>
+
         </p>
 
         <SignInwithGoogle />
