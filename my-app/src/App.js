@@ -2,24 +2,17 @@ import "./App.css";
 import Navbar from "./components/Navbar";
 import Profile from "./pages/profile";
 import Login from "./pages/login";
-import SignUp from "./pages/register"; 
+import SignUp from "./pages/register";
 import Home from "./pages/Home";
 import ForgotPass from "./pages/forgotPass";
 import AdminLogin from "./pages/adminLogin";
 
-
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import React, { useEffect } from "react";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useState } from "react";
 import { auth } from "./pages/firebase";
-import { Navigate } from "react-router-dom";
-
-
-
-
 
 function App() {
   const [user, setUser] = useState();
@@ -35,10 +28,15 @@ function App() {
         <div className="auth-inner">
           <Router>
             <Navbar />
+            <ToastContainer />
             <Routes>
               <Route
                     path="/"
                     element={user ? <Navigate to="/profile" /> : <Login />}
+              />
+              <Route
+                    path="/"
+                    element={user ? <Navigate to="/profile" /> : <AdminLogin />}
               />
               <Route path="/" exact element={<Home />} />
               <Route path="/profile" element={<Profile />} />
@@ -61,4 +59,3 @@ function App() {
 }
 
 export default App;
-

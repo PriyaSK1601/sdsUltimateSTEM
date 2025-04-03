@@ -11,23 +11,40 @@ function AdminLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (email !== "admin@gmail.com") {
+      toast.error("Only admin@gmail.com can access this page.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return; 
+    }
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast.success("Admin logged in Successfully", { position: "top-center" });
+      
+
+      toast.success("Admin login successful! Redirecting...", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+
       setTimeout(() => {
-        window.location.href = "/profile";
+        window.location.href = "/profile"; 
       }, 2000);
+
     } catch (error) {
-      console.log(error.code, error.message);
+      console.error("Login error:", error);
+
 
       if (error.code === "auth/wrong-password") {
-        toast.error("Incorrect password. Please try again.", { position: "top-center" });
-      } else if (error.code === "auth/user-not-found") {
-        toast.error("No admin found with this email.", { position: "top-center" });
-      } else if (error.code === "auth/invalid-email") {
-        toast.error("Invalid email format. Please check again.", { position: "top-center" });
+        toast.error("🔒 Incorrect password. Try again.", {
+          position: "top-center",
+        });
       } else {
-        toast.error(error.message, { position: "bottom-center" });
+        toast.error(`${error.message}`, {
+          position: "top-center",
+        });
       }
     }
   };
