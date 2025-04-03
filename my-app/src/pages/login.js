@@ -5,10 +5,13 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SignInwithGoogle from "./signInWIthGoogle";
 import "../styles/login.css"; 
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const history = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
