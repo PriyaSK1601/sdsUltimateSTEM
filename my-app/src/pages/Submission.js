@@ -3,15 +3,40 @@ import React, { useRef, useState } from "react";
 import UploadIcon from "../assets/upload.png";
 import UploadedIcon from "../assets/uploaded.png";
 import '../styles/Submission.css';
+import axios from "axios";
 
 function Submission({ onSubmit }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError]= useState('')
   const [image, setImage] = useState(null);
+  
   const fileInputRef = useRef(null);
 
+  const axiosPostData = async () => {
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("category", category);
+    if (image) {
+      formData.append("image", image);
+    }
+  
+    try {
+      const response = await axios.post('http://localhost:3001/contact', formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setError(<p className="success">{response.data}</p>);
+    } catch (error) {
+      console.error("There was an error submitting the form!", error);
+      setError(<p className="error">There was an error submitting the form. Please try again later.</p>);
+    }
+  };
+  
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -19,6 +44,10 @@ function Submission({ onSubmit }) {
       setMessage("All fields are required.");
       return;
     }
+    setError(' ')
+    axiosPostData()
+
+
 
     const submissionData = {
       title,
@@ -98,6 +127,7 @@ function Submission({ onSubmit }) {
         <button type="submit" className="btn btn-dark">Submit</button>
       </form>
       {message && <p className="message">{message}</p>}
+      {error}
     </div>
   );
 }
