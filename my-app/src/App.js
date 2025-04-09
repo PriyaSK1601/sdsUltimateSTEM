@@ -46,10 +46,6 @@ function App() {
                 element={<Home submissions={submissions} />}
               />
               <Route
-                path="/"
-                element={user ? <Navigate to="/profile" /> : <Login />}
-              />
-              <Route
                 path="/home"
                 exact
                 element={<Home submissions={submissions} />}
@@ -71,6 +67,12 @@ function App() {
       </div>
     </div>
   );
+}
+{
+  /*<Route
+                    path="/"
+                    element={user ? <Navigate to="/profile" /> : <Login />}
+              />*/
 }
 
 export default App;
