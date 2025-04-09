@@ -40,8 +40,16 @@ function App() {
           <Router>
             <Navbar />
             <Routes>
-              <Route path="/" exact element={<Home />} />
-              <Route path="/home" exact element={<Home />} />
+              <Route
+                path="/"
+                exact
+                element={<Home submissions={submissions} />}
+              />
+              <Route
+                path="/home"
+                exact
+                element={<Home submissions={submissions} />}
+              />
               <Route path="/profile" element={<Profile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<SignUp />} />
