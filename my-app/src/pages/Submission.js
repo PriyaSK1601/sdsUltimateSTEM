@@ -10,7 +10,6 @@ function Submission({ onSubmit }) {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [message, setMessage] = useState("");
-  const [error, setError]= useState('')
   const [image, setImage] = useState(null);
   
   const fileInputRef = useRef(null);
@@ -28,12 +27,10 @@ function Submission({ onSubmit }) {
       const response = await axios.post('http://localhost:3001/contact', formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-        },
+        }
       });
-      setError(<p className="success">{response.data}</p>);
-    } catch (error) {
-      console.error("There was an error submitting the form!", error);
-      setError(<p className="error">There was an error submitting the form. Please try again later.</p>);
+    } catch (e) {
+      setMessage("Error submitting form, try again!")
     }
   };
   
@@ -44,7 +41,7 @@ function Submission({ onSubmit }) {
       setMessage("All fields are required.");
       return;
     }
-    setError(' ')
+    
     axiosPostData()
 
 
@@ -127,7 +124,6 @@ function Submission({ onSubmit }) {
         <button type="submit" className="btn btn-dark">Submit</button>
       </form>
       {message && <p className="message">{message}</p>}
-      {error}
     </div>
   );
 }
