@@ -1,10 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Logo from "../assets/logo.png";
 import ProfileIcon from "../assets/profile_icon.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { auth } from "../pages/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import "../styles/Navbar.css";
 
 function Navbar() {
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleProfileClick = (e) => {
+    e.preventDefault();
+    if (user) {
+      navigate("/profile");
+    } else {
+      navigate("/login");
+    }
+  };
+
   return (
     <div className="navbar">
       <div className="leftSide">
@@ -15,9 +37,9 @@ function Navbar() {
         <Link to="/dashboard"> Dashboard </Link>
         <Link to="/tournament"> Tournament </Link>
         <Link to="/submission"> Submission </Link>
-        <Link to="/profile">
+        <a href="#" onClick={handleProfileClick}>
           <img src={ProfileIcon} alt="Profile Icon" />
-        </Link>
+        </a>
       </div>
     </div>
   );
