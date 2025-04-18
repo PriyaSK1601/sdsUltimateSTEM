@@ -1,6 +1,18 @@
 # SDS-ULTIMATE_STEM
 Software Development Studio - Ultimate STEM Project 
 
-hey team
+Compiling Instructions 
+1. You need to install node.js which you can download using this website (https://nodejs.org/en/download/)
+3. Either download the main branch code with the zip folder and extract or open with github desktop and VScode
+4. Open terminal and do the following commands:
+   cd my-app, 
+   npm install bootstrap@v5.3.3, 
+   npm install --save react-toastify, 
+   npm install firebase
+5. run the program with this command:
+   npm start
+6. The program should open in your browser and if any more errors send thru on discord or just chatgpt the error message
+
+
 
 ![25687280027bec6f4f4e31014aec2fb7](https://github.com/user-attachments/assets/ea0285dd-a924-4167-b66f-f214bb131bac)

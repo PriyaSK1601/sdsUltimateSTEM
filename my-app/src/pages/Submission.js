@@ -1,0 +1,137 @@
+import "bootstrap/dist/css/bootstrap.min.css";
+import React, { useRef, useState } from "react";
+import UploadIcon from "../assets/upload.png";
+import UploadedIcon from "../assets/uploaded.png";
+import '../styles/Submission.css';
+import axios from "axios";
+
+function Submission({ onSubmit }) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError]= useState('')
+  const [image, setImage] = useState(null);
+  
+  const fileInputRef = useRef(null);
+
+  const axiosPostData = async () => {
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("category", category);
+    if (image) {
+      formData.append("image", image);
+    }
+  
+    try {
+      const response = await axios.post('http://localhost:3001/contact', formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setError(<p className="success">{response.data}</p>);
+    } catch (error) {
+      console.error("There was an error submitting the form!", error);
+      setError(<p className="error">There was an error submitting the form. Please try again later.</p>);
+    }
+  };
+  
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    if (!title.trim() || !description.trim() || !category) {
+      setMessage("All fields are required.");
+      return;
+    }
+    setError(' ')
+    axiosPostData()
+
+
+
+    const submissionData = {
+      title,
+      description,
+      category,
+      image: image ? URL.createObjectURL(image) : null,
+    };
+    onSubmit(submissionData);
+
+    setMessage("Submission Successful!");
+    setTitle("");
+    setDescription("");
+    setCategory("");
+    setImage(null);
+  };
+
+  const handleImageInput = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImage(file);
+    }
+  };
+
+  return (
+    <div className="container-submission">
+      <div className="submission-header">
+        <h2>Tournament Submission</h2>
+        <h5>Submit your creative ideas here!</h5>
+      </div>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>Title:</label>
+          <input
+            type="text"
+            className="form-control"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter title"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Description:</label>
+          <textarea
+            className="form-control form-control-textarea"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Enter description"
+            required
+          ></textarea>
+        </div>
+        <div className="category-upload-container">
+          <select
+            className="form-control category-dropdown"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            required
+          >
+            <option value="">STEM Category</option>
+            <option value="Science">Science</option>
+            <option value="Technology">Technology</option>
+            <option value="Engineering">Engineering</option>
+            <option value="Mathematics">Mathematics</option>
+          </select>
+          <div className="upload-container" onClick={() => fileInputRef.current.click()}>
+            <span className="upload-label">Image upload (optional)</span>
+            <img src={image ? UploadedIcon : UploadIcon} alt="Upload Icon" />
+          </div>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageInput}
+          className="d-none"
+        />
+        <button type="submit" className="btn btn-dark">Submit</button>
+      </form>
+      {message && <p className="message">{message}</p>}
+      {error}
+    </div>
+  );
+}
+
+export default Submission;
+
+//<a href="https://www.flaticon.com/free-icons/file-upload" title="file upload icons">File upload icons created by Creatype - Flaticon</a>

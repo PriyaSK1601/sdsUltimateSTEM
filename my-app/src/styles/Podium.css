@@ -1,0 +1,71 @@
+.podium-container {
+  border-radius: 2em;
+  height: 35em;
+  position: relative;
+}
+
+.podium-container h1 {
+  font-weight: 700;
+}
+
+.card-container {
+  height: 22em;
+  width: 35em;
+  border-radius: 2em;
+  position: relative;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  top: 8%;
+}
+
+.card-container .card {
+  max-width: 80%;
+  height: 80%;
+  margin: 1rem auto;
+  margin-top: 2%;
+}
+
+.card-image {
+  background-size: cover;
+  background-position: center;
+}
+
+.card-content {
+  padding: 1em;
+}
+
+.category-badge {
+  margin-bottom: 0.5em;
+}
+
+.heading {
+  margin-bottom: 0.5em;
+}
+
+.description {
+  margin-bottom: 0.5em;
+}
+
+.left-button {
+  position: absolute;
+  left: -16%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  width: 3%;
+}
+
+.right-button {
+  position: absolute;
+  right: -10%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  width: 3%;
+}
+
+.left-button img,
+.right-button img {
+  height: 3em;
+}
