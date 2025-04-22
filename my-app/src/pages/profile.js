@@ -5,6 +5,8 @@ import profileIcon from "../assets/profile_icon.png";
 import { auth, db } from "./firebase";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import AdminAnalytics from "../components/adminAnalytics";
+import { logPageVisit } from "../utils/analytics";
 
 function Profile() {
   const [user, setUser] = useState(null);
@@ -16,12 +18,10 @@ function Profile() {
       if (currentUser) {
         setUser(currentUser);
 
-        //fetch user data from firestore database
         const fetchUserData = async () => {
           try {
             const userDocRef = doc(db, "Users", currentUser.uid);
             const userDoc = await getDoc(userDocRef);
-
             if (userDoc.exists()) {
               setUserData(userDoc.data());
               console.log("User data fetched:", userDoc.data());
@@ -32,7 +32,11 @@ function Profile() {
             console.error("Error fetching user data:", error);
           }
         };
+
         fetchUserData();
+
+        logPageVisit(currentUser.uid, "Profile");
+
       } else {
         navigate("/login");
       }
@@ -76,12 +80,12 @@ function Profile() {
                   <div className="profile-img-container">
                     {userData?.photo ? (
                       <img
-                        src="{userData.photo}"
+                        src={userData.photo}
                         alt="Profile photo"
                         className="img-fluid rounded-circle"
                       />
                     ) : (
-                      <img src={profileIcon} alt="Profile photo" />
+                      <img src={profileIcon} alt="Profile" />
                     )}
                   </div>
                   <div className="ms-4">
@@ -117,6 +121,14 @@ function Profile() {
                   </div>
                 </div>
               </div>
+
+              {user.email === "admin@gmail.com" && (
+                <div className="row">
+                  <div className="col-md-12">
+                    <AdminAnalytics />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </>
@@ -126,3 +138,4 @@ function Profile() {
 }
 
 export default Profile;
+
