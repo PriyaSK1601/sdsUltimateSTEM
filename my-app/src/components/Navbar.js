@@ -8,6 +8,7 @@ import "../styles/Navbar.css";
 
 function Navbar() {
   const [user, setUser] = useState(null);
+  const [ isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -31,6 +32,7 @@ function Navbar() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setIsAdmin(currentUser?.email === "admin@gmail.com");
     });
 
     return () => unsubscribe();
@@ -42,6 +44,15 @@ function Navbar() {
       navigate("/profile");
     } else {
       navigate("/login");
+    }
+  };
+
+  const handleTournamentClick = (e) => {
+    e.preventDefault();
+    if (isAdmin) {
+      navigate("/adminTournament");
+    } else { 
+      navigate("/Tournament")
     }
   };
 
@@ -73,9 +84,9 @@ function Navbar() {
             </Link>
           </li>
           <li className="nav-item active mx-4 nav-item-border">
-            <Link to="/tournament" className="nav-link">
+            <a href="#" className="nav-link" onClick={handleTournamentClick}>
               Tournament
-            </Link>
+            </a>
           </li>
           <li className="nav-item active mx-4 nav-item-border">
             <Link to="/submission" className="nav-link">

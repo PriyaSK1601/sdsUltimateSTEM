@@ -1,20 +1,22 @@
 import React from "react";
-import "../styles/Tournament.css";
+import "../styles/Tournament.css";  //so it looks the same as the tournament page.. need to change to match figma
 
-function Tournament({ submissions }) {
+function ViewSubmissions({ submissions }) {
     return (
-        <div className="tournament-container">
-            <h2>Tournament Contenders</h2>
-            {submissions.length === 0 ? (
-                <p>No Submissions</p>
-            ) : (
-                <div className="submissions-list">
-                    {submissions.map((submission, index) => (
-                    <div className="card">
+        <div style={{ padding: "20px" }}>
+        <h2>View Submissions</h2>
+        {submissions.length === 0 ? (
+            <p>No Submissions</p>
+        ) : (
+            <div className="submissions-list">
+                {submissions.map((submission, index) => (
+                    <div className="card" key={index}>
                         <div
                             className="card-image"
                             style={{
-                                backgroundImage: submission.image ? `url(${submission.image})` : "none",
+                                backgroundImage: submission.image
+                                    ? `url(${submission.image})`
+                                    : "none",
                             }}
                         ></div>
                         <div className="card-content">
@@ -26,12 +28,11 @@ function Tournament({ submissions }) {
                             </div>
                         </div>
                     </div>
-                    
-                    ))}
-                </div>
-            )}
-        </div>
+                ))}
+            </div>
+        )}
+    </div>
     );
-}
-
-export default Tournament;
+  }
+  
+  export default ViewSubmissions;

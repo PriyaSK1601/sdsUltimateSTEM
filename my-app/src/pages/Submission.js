@@ -1,9 +1,12 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import UploadIcon from "../assets/upload.png";
 import UploadedIcon from "../assets/uploaded.png";
 import '../styles/Submission.css';
 import axios from "axios";
+import { auth , db } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 function Submission({ onSubmit }) {
   const [title, setTitle] = useState("");
@@ -12,14 +15,39 @@ function Submission({ onSubmit }) {
   const [message, setMessage] = useState("");
   const [error, setError]= useState('')
   const [image, setImage] = useState(null);
+  const [author, setAuthor] = useState("Anonymous");
   
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const userDocRef = doc(db, "Users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            const fullName = data.firstName && data.lastName
+              ? `${data.firstName} ${data.lastName}`
+              : data.firstName || user.displayName || user.email.split("@")[0];
+            setAuthor(fullName);
+          } else {
+            setAuthor(user.displayName || user.email.split("@")[0]);
+          }
+        } catch (err) {
+          console.error("Failed to fetch user info", err);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const axiosPostData = async () => {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
     formData.append("category", category);
+    formData.append("author", author);
     if (image) {
       formData.append("image", image);
     }
@@ -54,7 +82,10 @@ function Submission({ onSubmit }) {
       description,
       category,
       image: image ? URL.createObjectURL(image) : null,
+      author,
+      date: new Date().toLocaleDateString(),
     };
+
     onSubmit(submissionData);
 
     setMessage("Submission Successful!");
