@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { auth, db } from "./firebase";
 import { setDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom"; 
 import "../styles/register.css"; // Import the CSS file
 
 function Register() {
@@ -10,12 +11,14 @@ function Register() {
   const [password, setPassword] = useState("");
   const [fname, setFname] = useState("");
   const [lname, setLname] = useState("");
+  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       const user = auth.currentUser;
+      console.log(user);
       if (user) {
         await setDoc(doc(db, "Users", user.uid), {
           email: user.email,
@@ -27,8 +30,13 @@ function Register() {
       console.log("User Registered Successfully!!");
       toast.success("User Registered Successfully!!", {
         position: "top-center",
+        autoClose: 2000,
       });
-      window.location.href = "/profile"; // Redirect after successful registration
+
+      setTimeout(() => {
+        navigate("/profile"); // Proper React Router navigation
+      }, 2000);
+
     } catch (error) {
       console.log(error.message);
       toast.error(error.message, {

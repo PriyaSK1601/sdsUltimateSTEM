@@ -8,10 +8,15 @@ import SignUp from "./pages/register";
 import Home from "./pages/Home";
 import Submission from "./pages/Submission";
 import Tournament from "./pages/Tournament";
+<<<<<<< HEAD
 import AdminTournament from "./pages/adminTournament";
 import ViewSubmissions from "./pages/viewSubmissions";
 
 
+=======
+import AdminLogin from "./pages/adminLogin";
+import ForgotPass from "./pages/forgotPass";
+>>>>>>> Login
 
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
@@ -57,6 +62,8 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<SignUp />} />
+              <Route path="/forgotPass" element={<ForgotPass/>} />
+              <Route path="/adminLogin" element={<AdminLogin />} />
               <Route
                 path="/submission"
                 element={<Submission onSubmit={handleNewSubmission} />}
