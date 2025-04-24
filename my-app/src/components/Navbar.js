@@ -49,11 +49,8 @@ function Navbar() {
 
   const handleTournamentClick = (e) => {
     e.preventDefault();
-    if (isAdmin) {
-      navigate("/adminTournament");
-    } else { 
-      navigate("/Tournament")
-    }
+    navigate("/Tournament")
+    
   };
 
   return (

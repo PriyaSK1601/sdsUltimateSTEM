@@ -72,8 +72,6 @@ function Submission({ onSubmit }) {
     
     axiosPostData()
 
-
-
     const submissionData = {
       title,
       description,

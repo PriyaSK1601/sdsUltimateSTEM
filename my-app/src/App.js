@@ -8,8 +8,6 @@ import SignUp from "./pages/register";
 import Home from "./pages/Home";
 import Submission from "./pages/Submission";
 import Tournament from "./pages/Tournament";
-import AdminTournament from "./pages/adminTournament";
-import ViewSubmissions from "./pages/viewSubmissions";
 import ForgotPass from "./pages/forgotPass"
 import AdminLogin from "./pages/adminLogin"
 
@@ -68,14 +66,6 @@ function App() {
               <Route
                 path="/tournament"
                 element={<Tournament submissions={submissions} />}
-              />
-              <Route
-                path="/adminTournament"
-                element={<AdminTournament/>}
-              />
-              <Route
-                path="/view-submissions"
-                element={<ViewSubmissions submissions={submissions} />}
               />
             </Routes>
           </Router>
