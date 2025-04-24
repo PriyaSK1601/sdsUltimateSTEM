@@ -10,7 +10,7 @@ function Tournament({ submissions }) {
             ) : (
                 <div className="submissions-list">
                     {submissions.map((submission, index) => (
-                        <div className="card">
+                    <div className="card">
                         <div
                             className="card-image"
                             style={{

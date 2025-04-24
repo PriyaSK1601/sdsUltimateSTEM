@@ -5,10 +5,13 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SignInwithGoogle from "./signInWIthGoogle";
 import "../styles/login.css"; 
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const history = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,6 +70,13 @@ function Login() {
 
         <p className="forgot-password">
           New user? <a href="/register" className="link">Register Here</a>
+          <br />
+          Admin? <a href="/adminLogin" className="link">Admin Login Here</a>
+        </p>
+
+        <p className="forgotPass">
+          <a href="/forgotPass" className="link">Forgot Password?</a>
+
         </p>
 
         <SignInwithGoogle />
