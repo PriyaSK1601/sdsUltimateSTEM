@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/profile.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 import profileIcon from "../assets/profile_icon.png";
 import { auth, db } from "./firebase";
 import { signOut, onAuthStateChanged } from "firebase/auth";
@@ -36,7 +37,6 @@ function Profile() {
         fetchUserData();
 
         logPageVisit(currentUser.uid, "Profile");
-
       } else {
         navigate("/login");
       }
@@ -49,6 +49,10 @@ function Profile() {
     signOut(auth).then(() => {
       navigate("/login");
     });
+  };
+
+  const handleEditCountdown = () => {
+    navigate("/edit-countdown");
   };
 
   const getFullName = () => {
@@ -69,8 +73,19 @@ function Profile() {
           <div className="row">
             <div className="col-md-5">
               <div className="content-container">
-                <h2 className="mb-4">Previous Submissions</h2>
-                <div className="item-box"></div>
+                {user.email === "admin@gmail.com" ? (
+                  <div>
+                    <h2 className="mb-4">Approve Submissions</h2>
+                    {/*NOTE: This is just a placeholder item box -- TB REPLACED WITH ACTUAL CONTENT*/}
+                    <div className="item-box"></div>
+                  </div>
+                ) : (
+                  <div>
+                    <h2 className="mb-4">Previous Submissions</h2>
+                    {/*NOTE: This is just a placeholder item box -- TB REPLACED WITH ACTUAL CONTENT*/}
+                    <div className="item-box"></div>{" "}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -81,7 +96,7 @@ function Profile() {
                     {userData?.photo ? (
                       <img
                         src={userData.photo}
-                        alt="Profile photo"
+                        alt="Profile"
                         className="img-fluid rounded-circle"
                       />
                     ) : (
@@ -114,14 +129,29 @@ function Profile() {
                 </div>
               </div>
               <div className="content-container">
-                <h2 className="mb-4">Previous Votes</h2>
-                <div className="row">
-                  <div className="col-md-6 mb-3">
-                    <div className="item-box"></div>
+                {user.email === "admin@gmail.com" ? (
+                  <div>
+                    <h2 className="mb-4">Admin Tools</h2>
+                    <div className="py-1">
+                      <button
+                        className="btn btn-secondary"
+                        onClick={handleEditCountdown}
+                      >
+                        Edit countdown
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <h2 className="mb-4">Previous Votes</h2>
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <div className="item-box"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-
               {user.email === "admin@gmail.com" && (
                 <div className="row">
                   <div className="col-md-12">
@@ -138,4 +168,3 @@ function Profile() {
 }
 
 export default Profile;
-
