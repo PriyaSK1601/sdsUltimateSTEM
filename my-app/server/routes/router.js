@@ -20,6 +20,58 @@ router.post('/contact', upload.single('image'),async (req, res) => {  // Use upl
         res.send("Submisison failed");
     }
     
+}); 
+
+
+router.get('/submissions', async (req, res) => {
+    try {
+        const submissions = await schemas.Submission.find(); // Fetch all submissions
+        res.json(submissions); // Send them as a response
+    } catch (error) {
+        console.error("Error fetching submissions:", error);
+        res.status(500).json({ message: "Error fetching submissions" });
+    }
 });
+
+router.patch("/submissions/:id/approve", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updatedSubmission = await schemas.Submission.findByIdAndUpdate(
+        id,
+        { status: "approved" }, // Update status to 'approved'
+        { new: true }
+      );
+      
+      if (!updatedSubmission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+  
+      res.json(updatedSubmission); // Send the updated submission back
+    } catch (error) {
+      console.error("Error approving submission:", error);
+      res.status(500).json({ message: "Error approving submission" });
+    }
+  });
+  
+  // Decline submission route
+  router.patch("/submissions/:id/decline", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updatedSubmission = await schemas.Submission.findByIdAndUpdate(
+        id,
+        { status: "declined" }, // Update status to 'declined'
+        { new: true }
+      );
+      
+      if (!updatedSubmission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+  
+      res.json(updatedSubmission); // Send the updated submission back
+    } catch (error) {
+      console.error("Error declining submission:", error);
+      res.status(500).json({ message: "Error declining submission" });
+    }
+  });
 
 module.exports = router;

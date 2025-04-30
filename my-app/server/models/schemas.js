@@ -3,13 +3,13 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const submissionSchema = new Schema({
-    title: {type:String, required:true},
-    description:{type:String, required:true}, 
-    category:{type:String, required:true},
-    entryDate: {type:Date, default:Date.now} //generates the date at time of entry
-})
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    category: { type: String, required: true },
+    entryDate: { type: Date, default: Date.now },
+    status: { type: String, default: "pending", enum: ["pending", "approved", "declined"] },  // New field
+  });
 
-const Submission = mongoose.model('Submission', submissionSchema,'submission-data')
-const mySchemas = {'Submission':Submission}
-
-module.exports = mySchemas
+const Submission = mongoose.model("Submission", submissionSchema, "submission-data");
+const mySchemas = { Submission };
+module.exports = mySchemas;

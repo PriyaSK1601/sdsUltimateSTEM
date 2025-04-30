@@ -5,14 +5,31 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import profileIcon from "../assets/profile_icon.png";
 import { auth, db } from "./firebase";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import AdminAnalytics from "../components/adminAnalytics";
 import { logPageVisit } from "../utils/analytics";
 
 function Profile() {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/submissions");
+        const data = await response.json();
+        setSubmissions(data);
+      } catch (error) {
+        console.error("Error fetching submissions:", error);
+      }
+    };
+
+    if (user?.email === "admin@gmail.com") {
+      fetchSubmissions();
+    }
+  }, [user]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -35,7 +52,6 @@ function Profile() {
         };
 
         fetchUserData();
-
         logPageVisit(currentUser.uid, "Profile");
       } else {
         navigate("/login");
@@ -66,6 +82,34 @@ function Profile() {
     return user?.email?.split("@")[0] || "User";
   };
 
+  const handleApprove = async (submissionId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/submissions/${submissionId}/approve`, {
+        method: "PATCH",
+      });
+      if (response.ok) {
+        setSubmissions(submissions.filter((submission) => submission.id !== submissionId));
+        console.log("Submission approved");
+      }
+    } catch (error) {
+      console.error("Error approving submission:", error);
+    }
+  };
+
+  const handleDecline = async (submissionId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/submissions/${submissionId}/decline`, {
+        method: "PATCH",
+      });
+      if (response.ok) {
+        setSubmissions(submissions.filter((submission) => submission.id !== submissionId));
+        console.log("Submission declined");
+      }
+    } catch (error) {
+      console.error("Error declining submission:", error);
+    }
+  };
+
   return (
     <div className="container-fluid py-4">
       {user && (
@@ -76,13 +120,51 @@ function Profile() {
                 {user.email === "admin@gmail.com" ? (
                   <div>
                     <h2 className="mb-4">Approve Submissions</h2>
-                    {/*NOTE: This is just a placeholder item box -- TB REPLACED WITH ACTUAL CONTENT*/}
-                    <div className="item-box"></div>
+                    {submissions.length > 0 ? (
+                      <div className="submissions-list">
+                        {submissions.map((submission, index) => (
+                          <div className="submission-card" key={index}>
+                            <div
+                              className="card-image"
+                              style={{
+                                backgroundImage: submission.image
+                                  ? `url(${submission.image})`
+                                  : "none",
+                              }}
+                            ></div>
+                            <div className="card-content">
+                              <div className="category">{submission.category}</div>
+                              <div className="heading">{submission.title}</div>
+                              <div className="description">{submission.description}</div>
+                              <div className="author">
+                                By <span className="name">{submission.author}</span>{" "}
+                                {submission.date}
+                              </div>
+                              <div className="action-buttons">
+                                <button
+                                  className="btn btn-success"
+                                  onClick={() => handleApprove(submission.id)}
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  className="btn btn-danger"
+                                  onClick={() => handleDecline(submission.id)}
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p>No submissions to review yet.</p>
+                    )}
                   </div>
                 ) : (
                   <div>
                     <h2 className="mb-4">Previous Submissions</h2>
-                    {/*NOTE: This is just a placeholder item box -- TB REPLACED WITH ACTUAL CONTENT*/}
                     <div className="item-box"></div>{" "}
                   </div>
                 )}
