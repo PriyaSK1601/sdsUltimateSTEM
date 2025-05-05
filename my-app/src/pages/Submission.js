@@ -7,6 +7,7 @@ import axios from "axios";
 import { auth , db } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 function Submission({ onSubmit }) {
   const [title, setTitle] = useState("");
@@ -15,6 +16,7 @@ function Submission({ onSubmit }) {
   const [message, setMessage] = useState("");
   const [image, setImage] = useState(null);
   const [author, setAuthor] = useState("Anonymous");
+  const navigate = useNavigate();
   
   const fileInputRef = useRef(null);
 
@@ -46,13 +48,13 @@ function Submission({ onSubmit }) {
     formData.append("title", title);
     formData.append("description", description);
     formData.append("category", category);
-    formData.append("author", author);
+    formData.append("author", author); // <-- Add this
     if (image) {
       formData.append("image", image);
     }
   
     try {
-      const response = await axios.post('http://localhost:3001/contact', formData, {
+      await axios.post('http://localhost:3001/contact', formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         }
@@ -64,30 +66,19 @@ function Submission({ onSubmit }) {
   
   const handleSubmit = (event) => {
     event.preventDefault();
-
+  
     if (!title.trim() || !description.trim() || !category) {
       setMessage("All fields are required.");
       return;
     }
-    
-    axiosPostData()
-
-    const submissionData = {
-      title,
-      description,
-      category,
-      image: image ? URL.createObjectURL(image) : null,
-      author,
-      date: new Date().toLocaleDateString(),
-    };
-
-    onSubmit(submissionData);
-
-    setMessage("Submission Successful!");
+  
+    axiosPostData();
+  
     setTitle("");
     setDescription("");
     setCategory("");
     setImage(null);
+    navigate("/tournament"); 
   };
 
   const handleImageInput = (event) => {

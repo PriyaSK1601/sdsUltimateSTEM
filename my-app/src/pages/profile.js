@@ -20,12 +20,14 @@ function Profile() {
       try {
         const response = await fetch("http://localhost:3001/submissions");
         const data = await response.json();
-        setSubmissions(data);
+        // Filter out submissions with status 'approved' or 'declined'
+        const pendingSubmissions = data.filter(submission => submission.status === "pending");
+        setSubmissions(pendingSubmissions);
       } catch (error) {
         console.error("Error fetching submissions:", error);
       }
     };
-
+  
     if (user?.email === "admin@gmail.com") {
       fetchSubmissions();
     }
@@ -86,27 +88,41 @@ function Profile() {
     try {
       const response = await fetch(`http://localhost:3001/submissions/${submissionId}/approve`, {
         method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        }
       });
-      if (response.ok) {
-        setSubmissions(submissions.filter((submission) => submission.id !== submissionId));
-        console.log("Submission approved");
+  
+      if (!response.ok) {
+        throw new Error("Approval failed");
       }
+  
+      // Remove approved item from the list locally
+      setSubmissions((prev) => prev.filter(sub => sub._id !== submissionId));
     } catch (error) {
       console.error("Error approving submission:", error);
+      alert("Failed to approve submission.");
     }
   };
-
+  
   const handleDecline = async (submissionId) => {
     try {
       const response = await fetch(`http://localhost:3001/submissions/${submissionId}/decline`, {
         method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        }
       });
-      if (response.ok) {
-        setSubmissions(submissions.filter((submission) => submission.id !== submissionId));
-        console.log("Submission declined");
+  
+      if (!response.ok) {
+        throw new Error("Decline failed");
       }
+  
+      // Remove declined item from the list locally
+      setSubmissions((prev) => prev.filter(sub => sub._id !== submissionId));
     } catch (error) {
       console.error("Error declining submission:", error);
+      alert("Failed to decline submission.");
     }
   };
 
@@ -121,17 +137,17 @@ function Profile() {
                   <div>
                     <h2 className="mb-4">Approve Submissions</h2>
                     {submissions.length > 0 ? (
+                    <div className="submissions-scroll-container">
                       <div className="submissions-list">
                         {submissions.map((submission, index) => (
-                          <div className="submission-card" key={index}>
-                            <div
-                              className="card-image"
-                              style={{
-                                backgroundImage: submission.image
-                                  ? `url(${submission.image})`
-                                  : "none",
-                              }}
-                            ></div>
+                          <div className="view-submission-card " key={index}>
+                            {submission.image ? (
+                              <img
+                              className="view-card-image"
+                              src={`http://localhost:3001/image/${submission._id}`}
+                              alt={submission.title}
+                            />
+                            ) : null}
                             <div className="card-content">
                               <div className="category">{submission.category}</div>
                               <div className="heading">{submission.title}</div>
@@ -140,16 +156,16 @@ function Profile() {
                                 By <span className="name">{submission.author}</span>{" "}
                                 {submission.date}
                               </div>
-                              <div className="action-buttons">
+                              <div className="action-button-container">
                                 <button
-                                  className="btn btn-success"
-                                  onClick={() => handleApprove(submission.id)}
+                                  className=""
+                                  onClick={() => handleApprove(submission._id)}
                                 >
                                   Approve
                                 </button>
                                 <button
-                                  className="btn btn-danger"
-                                  onClick={() => handleDecline(submission.id)}
+                                  className=""
+                                  onClick={() => handleDecline(submission._id)}
                                 >
                                   Decline
                                 </button>
@@ -158,8 +174,9 @@ function Profile() {
                           </div>
                         ))}
                       </div>
+                      </div>
                     ) : (
-                      <p>No submissions to review yet.</p>
+                      <p>No submissions to review!</p>
                     )}
                   </div>
                 ) : (
