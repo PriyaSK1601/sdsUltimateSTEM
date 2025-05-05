@@ -5,15 +5,55 @@ import CountdownTimer from "../components/CountdownTimer";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function Tournament({ submissions }) {
-  const [countdownData, setCountdownData] = useState(null);
+  const [tournamentData, setTournamentData] = useState(null);
+  const [currentRound, setCurrentRound] = useState(null);
   const navigate = useNavigate();
 
+  const [refreshKey, setRefreshKey] = useState(0);
+
   useEffect(() => {
-    const savedCountdown = localStorage.getItem("tournamentCountdown");
-    if (savedCountdown) {
-      setCountdownData(JSON.parse(savedCountdown));
-    }
-  }, []);
+    const handleStorageChange = (e) => {
+      if (e.key === "tournamentData" || e.key === null) {
+        setRefreshKey((prevKey) => prevKey + 1);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    // Load tournament data
+    const loadTournamentData = () => {
+      const savedTournament = localStorage.getItem("tournamentData");
+      if (savedTournament) {
+        const parsedData = JSON.parse(savedTournament);
+        setTournamentData(parsedData);
+
+        // Get current round
+        if (parsedData.isActive && parsedData.rounds.length > 0) {
+          const currentRoundIndex = parsedData.currentRound;
+          if (currentRoundIndex < parsedData.rounds.length) {
+            setCurrentRound(parsedData.rounds[currentRoundIndex]);
+          } else {
+            // Tournament has finished all rounds
+            setCurrentRound(null);
+          }
+        } else {
+          setCurrentRound(null);
+        }
+      } else {
+        setTournamentData(null);
+        setCurrentRound(null);
+      }
+    };
+
+    loadTournamentData();
+
+    // Set up an interval to check for round changes
+    const intervalId = setInterval(loadTournamentData, 2000);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [refreshKey]);
 
   const handleSubmitIdea = () => {
     navigate("/submission");
@@ -27,14 +67,13 @@ function Tournament({ submissions }) {
     <div className="container my-5 tournament-submission">
       <div className="row justify-content-center">
         <div className="col-sm-8 text-center">
-          {countdownData ? (
+          {currentRound ? (
             <>
-              {countdownData.isActive && (
-                <h2 className="fw-bold">Current round ends in ...</h2>
-              )}
+              <h2 className="fw-bold">{currentRound.name}</h2>
+              <h3>Ends in:</h3>
               <CountdownTimer
-                targetDate={countdownData.targetDate}
-                isActive={countdownData.isActive}
+                targetDate={currentRound.targetDate}
+                isActive={tournamentData.isActive}
               />
               <div className="d-flex justify-content-center mt-4">
                 <div className="px-4">
@@ -55,7 +94,7 @@ function Tournament({ submissions }) {
           ) : (
             <>
               <h2 className="fw-bold">Tournament has ended</h2>
-              <p>Submit your book idea for the next tournament!</p>
+              <p>Submit your book idea for the next tournament.</p>
               <div className="d-flex justify-content-center mt-4">
                 <div className="px-4">
                   <button

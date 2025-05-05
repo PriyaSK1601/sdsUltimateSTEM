@@ -12,6 +12,40 @@ function CountdownTimer({ targetDate, isActive }) {
   const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
+    // This effect handles checking if there's been an external change to current round
+    if (isActive) {
+      const checkCurrentRound = setInterval(() => {
+        const savedTournament = localStorage.getItem("tournamentData");
+        if (savedTournament) {
+          const tournamentData = JSON.parse(savedTournament);
+          const currentRoundIndex = tournamentData.currentRound;
+
+          if (currentRoundIndex < tournamentData.rounds.length) {
+            const currentTargetDate =
+              tournamentData.rounds[currentRoundIndex].targetDate;
+
+            // If we notice the target date has changed externally (e.g., round change)
+            if (currentTargetDate !== targetDate) {
+              console.log(
+                `Detected round change in CountdownTimer: ${targetDate} → ${currentTargetDate}`
+              );
+              // Trigger a re-render of parent components by dispatching storage event
+              window.dispatchEvent(new Event("storage"));
+            }
+          }
+        }
+      }, 1000);
+
+      return () => clearInterval(checkCurrentRound);
+    }
+  }, [isActive, targetDate]);
+
+  const [transitionHandled, setTransitionHandled] = useState(false);
+  useEffect(() => {
+    setTransitionHandled(false);
+  }, [targetDate]);
+
+  useEffect(() => {
     if (!isActive) {
       setTimeRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       setIsExpired(true);
@@ -22,7 +56,38 @@ function CountdownTimer({ targetDate, isActive }) {
       const difference = new Date(targetDate) - new Date();
 
       if (difference <= 0) {
+        /*setIsExpired(true);
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };*/
         setIsExpired(true);
+
+        if (!transitionHandled) {
+          setTransitionHandled(true);
+
+          setTimeout(() => {
+            const savedTournament = localStorage.getItem("tournamentData");
+            if (savedTournament) {
+              const tournamentData = JSON.parse(savedTournament);
+              const currentRoundIndex = tournamentData.currentRound;
+
+              // If there's another round available, advance to it
+              if (currentRoundIndex < tournamentData.rounds.length - 1) {
+                const nextRoundIndex = currentRoundIndex + 1;
+                tournamentData.currentRound = nextRoundIndex;
+                localStorage.setItem(
+                  "tournamentData",
+                  JSON.stringify(tournamentData)
+                );
+                console.log(`Advanced to round ${nextRoundIndex + 1}`);
+              } else {
+                // This was the final round - automatically reset the tournament
+                console.log(
+                  "Tournament has completed all rounds - resetting data"
+                );
+                localStorage.removeItem("tournamentData");
+              }
+            }
+          }, 1000);
+        }
         return { days: 0, hours: 0, minutes: 0, seconds: 0 };
       }
       setIsExpired(false);
@@ -42,7 +107,7 @@ function CountdownTimer({ targetDate, isActive }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [targetDate, isActive]);
+  }, [targetDate, isActive, transitionHandled]);
 
   const formatNumber = (num) => {
     return num.toString().padStart(2, "0");
