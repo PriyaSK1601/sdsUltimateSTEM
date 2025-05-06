@@ -1,5 +1,14 @@
 .tournament-container {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 20px;
+  height: 100vh;
+  background-image: url("../assets/bg.png");
+  background-size: cover;
+  background-position: center;
   overflow-x: auto;
 }
 
@@ -79,4 +88,62 @@
   font-size: 2rem;
   color: #28a745;
   font-weight: bold;
+}
+
+/* ✅ Submission card styles kept from Submission branch */
+.submission-card {
+  width: 300px;
+  background: white;
+  padding: 0.4em;
+  border-radius: 6px;
+  text-align: left;
+  margin: 20px;
+}
+
+.submission-card:hover {
+  transform: scale(1.01);
+  transition: transform 0.3s ease;
+}
+
+.card-image {
+  background-color: rgb(236, 236, 236);
+  width: 100%;
+  height: 130px;
+  border-radius: 6px 6px 0 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.category {
+  text-transform: uppercase;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: rgb(0, 0, 0);
+  padding: 10px 7px 0;
+}
+
+.heading {
+  font-weight: 700;
+  font-size: large;
+  color: rgb(88, 87, 87);
+  padding: 5px;
+}
+
+.heading:hover {
+  cursor: pointer;
+}
+
+.description {
+  font-size: small;
+  padding: 5px;
+}
+
+.author {
+  color: gray;
+  font-weight: 400;
+  font-size: 11px;
+  padding-top: 10px;
+  padding-left: 7px;
+  padding-bottom: 2px;
 }

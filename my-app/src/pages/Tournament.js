@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/Tournament.css";
+import CountdownTimer from "../components/CountdownTimer";
+import "bootstrap/dist/css/bootstrap.min.css";
 
-// Draws a curved SVG connector between contenders
+// ✅ Connector component
 function Connector({ fromTop, toTop }) {
   const height = Math.abs(toTop - fromTop);
   const top = Math.min(fromTop, toTop);
@@ -19,10 +22,7 @@ function Connector({ fromTop, toTop }) {
       height={height}
     >
       <path
-        d={`
-          M0,${fromTop - top}
-          C20,${fromTop - top} 60,${toTop - top} 80,${toTop - top}
-        `}
+        d={`M0,${fromTop - top} C20,${fromTop - top} 60,${toTop - top} 80,${toTop - top}`}
         stroke="#ccc"
         fill="transparent"
         strokeWidth="2"
@@ -31,22 +31,38 @@ function Connector({ fromTop, toTop }) {
   );
 }
 
-function Tournament({ submissions }) {
-  const paddedSubmissions = submissions.slice(0, 16);
-  while (paddedSubmissions.length < 16) {
-    paddedSubmissions.push(null);
-  }
-
-  const isRound1Ready = paddedSubmissions.every((s) => s !== null);
-
+function Tournament() {
+  const [submissions, setSubmissions] = useState([]);
   const [round1Winners, setRound1Winners] = useState(Array(8).fill(null));
   const [round2Winners, setRound2Winners] = useState(Array(4).fill(null));
   const [semiFinalWinners, setSemiFinalWinners] = useState(Array(2).fill(null));
   const [finalWinner, setFinalWinner] = useState(null);
+  const [countdownData, setCountdownData] = useState(null);
+  const navigate = useNavigate();
+
+  // ✅ Fetch approved submissions
+  useEffect(() => {
+    const fetchApprovedSubmissions = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/submissions");
+        const data = await response.json();
+        const approved = data.filter((submission) => submission.status === "approved");
+        setSubmissions(approved.slice(0, 16)); // Ensure max 16
+      } catch (error) {
+        console.error("Error fetching submissions:", error);
+      }
+    };
+    fetchApprovedSubmissions();
+  }, []);
+
+  const paddedSubmissions = [...submissions];
+  while (paddedSubmissions.length < 16) {
+    paddedSubmissions.push(null);
+  }
+  const isRound1Ready = paddedSubmissions.every((s) => s !== null);
 
   const handleClick = (round, matchIndex, contenderIndex, submission) => {
     if (!submission) return;
-
     if (round > 1 && !isRound1Ready) return;
 
     if (round === 1) {
@@ -68,7 +84,6 @@ function Tournament({ submissions }) {
 
   const getContender = (submission, round, matchIndex, contenderIndex) => {
     const isClickable = submission && (round === 1 || isRound1Ready);
-
     return (
       <div
         className={`contender ${!submission ? "empty" : ""} ${!isClickable ? "disabled" : ""}`}
@@ -82,7 +97,6 @@ function Tournament({ submissions }) {
   const getRoundMatches = (entries, round, nextRound = null) => {
     const matches = [];
     const totalMatches = Math.ceil(entries.length / 2);
-
     for (let i = 0; i < totalMatches; i++) {
       const submission1 = entries[i * 2] || null;
       const submission2 = entries[i * 2 + 1] || null;
@@ -91,57 +105,83 @@ function Tournament({ submissions }) {
         <div className="match" key={`round-${round}-match-${i}`}>
           {getContender(submission1, round, i, 0)}
           {getContender(submission2, round, i, 1)}
-          {nextRound && nextRound[i] && (
-            <Connector fromTop={40} toTop={40} />
-          )}
+          {nextRound && nextRound[i] && <Connector fromTop={40} toTop={40} />}
         </div>
       );
     }
     return matches;
   };
 
+  const handleSubmitIdea = () => navigate("/submission");
+  const handleVoteNow = () => navigate("/vote");
+
   return (
     <div className="tournament-container">
-      <h2>Tournament Bracket</h2>
-      {!isRound1Ready && (
-        <p className="warning">⚠️ Please ensure all 16 submissions are present before progressing.</p>
-      )}
-      <div className="bracket">
-        <div className="bracket-round">
-          <div className="round-label">Round 1</div>
-          {getRoundMatches(paddedSubmissions, 1, round1Winners)}
-        </div>
-
-        <div className="bracket-round">
-          <div className="round-label">Quarterfinals</div>
-          {getRoundMatches(round1Winners, 2, round2Winners)}
-        </div>
-
-        <div className="bracket-round">
-          <div className="round-label">Semifinals</div>
-          {getRoundMatches(round2Winners, 3, semiFinalWinners)}
-        </div>
-
-        <div className="bracket-round">
-          <div className="round-label">Final</div>
-          {getRoundMatches(semiFinalWinners, 4, [finalWinner])}
-        </div>
-
-        <div className="bracket-round">
-          <div className="round-label">Champion</div>
-          <div className="winner">
-            {finalWinner ? (
-              <>
-                🏆 {finalWinner.title}
-              </>
-            ) : (
-              <div className="contender empty">Waiting...</div>
+      <div className="header">
+        <h2>Tournament Bracket</h2>
+        {countdownData ? (
+          <>
+            {countdownData.isActive && (
+              <h4>Current round ends in ...</h4>
             )}
+            <CountdownTimer targetDate={countdownData.targetDate} isActive={countdownData.isActive} />
+            <div className="d-flex justify-content-center mt-4">
+              <button className="btn btn-secondary mx-2" onClick={handleSubmitIdea}>
+                Submit an Idea!
+              </button>
+              <button className="btn btn-secondary mx-2" onClick={handleVoteNow}>
+                Vote Now!
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h4>Tournament has ended</h4>
+            <p>Submit your idea for the next tournament!</p>
+            <div className="d-flex justify-content-center mt-4">
+              <button className="btn btn-secondary mx-2" onClick={handleSubmitIdea}>
+                Submit an Idea!
+              </button>
+            </div>
+          </>
+        )}
+
+      {!isRound1Ready && (
+        <p className="warning">⚠️ Please ensure all 16 submissions are approved before starting the tournament.</p>
+      )}
+
+      {submissions.length === 0 ? (
+        <p>No submissions available yet.</p>
+      ) : (
+        <div className="bracket">
+          <div className="bracket-round">
+            <div className="round-label">Round 1</div>
+            {getRoundMatches(paddedSubmissions, 1, round1Winners)}
+          </div>
+          <div className="bracket-round">
+            <div className="round-label">Quarterfinals</div>
+            {getRoundMatches(round1Winners, 2, round2Winners)}
+          </div>
+          <div className="bracket-round">
+            <div className="round-label">Semifinals</div>
+            {getRoundMatches(round2Winners, 3, semiFinalWinners)}
+          </div>
+          <div className="bracket-round">
+            <div className="round-label">Final</div>
+            {getRoundMatches(semiFinalWinners, 4, [finalWinner])}
+          </div>
+          <div className="bracket-round">
+            <div className="round-label">Champion</div>
+            <div className="winner">
+              {finalWinner ? <>🏆 {finalWinner.title}</> : <div className="contender empty">Waiting...</div>}
+            </div>
           </div>
         </div>
+      )}
       </div>
     </div>
   );
 }
 
 export default Tournament;
+
