@@ -59,30 +59,27 @@ function Tournament() {
       if (savedTournament) {
         const parsedData = JSON.parse(savedTournament);
         setTournamentData(parsedData);
+
+        // Get current round
         if (parsedData.isActive && parsedData.rounds.length > 0) {
           const currentRoundIndex = parsedData.currentRound;
           if (currentRoundIndex < parsedData.rounds.length) {
             setCurrentRound(parsedData.rounds[currentRoundIndex]);
-            setCountdownData({
-              isActive: parsedData.isActive,
-              targetDate: parsedData.rounds[currentRoundIndex].targetDate,
-            });
           } else {
+            // Tournament has finished all rounds
             setCurrentRound(null);
-            setCountdownData(null);
           }
         } else {
           setCurrentRound(null);
-          setCountdownData(null);
         }
       } else {
         setTournamentData(null);
         setCurrentRound(null);
-        setCountdownData(null);
       }
     };
 
     loadTournamentData();
+
     const intervalId = setInterval(loadTournamentData, 2000);
 
     return () => {
@@ -169,52 +166,52 @@ function Tournament() {
     return matches;
   };
 
-  const handleSubmitIdea = () => navigate("/submission");
-  const handleVoteNow = () => navigate("/vote");
+  const handleSubmitIdea = () => {
+    navigate("/submission");
+  };
+  const handleVoteNow = () => {
+    navigate("/vote");
+  };
 
   return (
     <div className="tournament-container">
+      <div className="container my-3 row justify-content-center">
+        <div className="col-sm-8 text-center">
+          {currentRound ? (
+            <>
+              <h2 className="fw-bold">{currentRound.name}</h2>
+              <h3>Ends in:</h3>
+              <CountdownTimer
+                targetDate={currentRound.targetDate}
+                isActive={tournamentData.isActive}
+              />
+              <div className="d-flex justify-content-center mt-4">
+                <div className="px-4">
+                  <button className="btn btn-secondary" onClick={handleVoteNow}>
+                    Vote Now!
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="fw-bold">Tournament has ended</h2>
+              <p>Submit your book idea for the next tournament.</p>
+              <div className="d-flex justify-content-center mt-4">
+                <div className="px-4">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleSubmitIdea}
+                  >
+                    Submit an Idea!
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
       <div className="header">
-        <h2 className="text-center">Tournament Bracket</h2>
-        {countdownData ? (
-          <>
-            {countdownData.isActive && <h4>Current round ends in ...</h4>}
-            <CountdownTimer
-              targetDate={countdownData.targetDate}
-              isActive={countdownData.isActive}
-            />
-            <div className="d-flex justify-content-center mt-4">
-              <button
-                className="btn btn-secondary mx-2"
-                onClick={handleSubmitIdea}
-              >
-                Submit an Idea!
-              </button>
-              <button
-                className="btn btn-secondary mx-2"
-                onClick={handleVoteNow}
-              >
-                Vote Now!
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <h4 className="text-center">Tournament has ended</h4>
-            <p className="text-center">
-              Submit your idea for the next tournament!
-            </p>
-            <div className="d-flex justify-content-center mt-4">
-              <button
-                className="btn btn-secondary mx-2"
-                onClick={handleSubmitIdea}
-              >
-                Submit an Idea!
-              </button>
-            </div>
-          </>
-        )}
-
         {!isRound1Ready && (
           <p className="warning">
             ⚠️ Please ensure all 16 submissions are approved before starting the
