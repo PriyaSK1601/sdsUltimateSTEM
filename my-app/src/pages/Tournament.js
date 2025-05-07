@@ -22,7 +22,9 @@ function Connector({ fromTop, toTop }) {
       height={height}
     >
       <path
-        d={`M0,${fromTop - top} C20,${fromTop - top} 60,${toTop - top} 80,${toTop - top}`}
+        d={`M0,${fromTop - top} C20,${fromTop - top} 60,${toTop - top} 80,${
+          toTop - top
+        }`}
         stroke="#ccc"
         fill="transparent"
         strokeWidth="2"
@@ -94,7 +96,9 @@ function Tournament() {
       try {
         const response = await fetch("http://localhost:3001/submissions");
         const data = await response.json();
-        const approved = data.filter((submission) => submission.status === "approved");
+        const approved = data.filter(
+          (submission) => submission.status === "approved"
+        );
         setSubmissions(approved.slice(0, 16));
       } catch (error) {
         console.error("Error fetching submissions:", error);
@@ -134,8 +138,13 @@ function Tournament() {
     const isClickable = submission && (round === 1 || isRound1Ready);
     return (
       <div
-        className={`contender ${!submission ? "empty" : ""} ${!isClickable ? "disabled" : ""}`}
-        onClick={() => isClickable && handleClick(round, matchIndex, contenderIndex, submission)}
+        className={`contender ${!submission ? "empty" : ""} ${
+          !isClickable ? "disabled" : ""
+        }`}
+        onClick={() =>
+          isClickable &&
+          handleClick(round, matchIndex, contenderIndex, submission)
+        }
       >
         {submission ? submission.title : "Waiting..."}
       </div>
@@ -166,26 +175,40 @@ function Tournament() {
   return (
     <div className="tournament-container">
       <div className="header">
-        <h2>Tournament Bracket</h2>
+        <h2 className="text-center">Tournament Bracket</h2>
         {countdownData ? (
           <>
             {countdownData.isActive && <h4>Current round ends in ...</h4>}
-            <CountdownTimer targetDate={countdownData.targetDate} isActive={countdownData.isActive} />
+            <CountdownTimer
+              targetDate={countdownData.targetDate}
+              isActive={countdownData.isActive}
+            />
             <div className="d-flex justify-content-center mt-4">
-              <button className="btn btn-secondary mx-2" onClick={handleSubmitIdea}>
+              <button
+                className="btn btn-secondary mx-2"
+                onClick={handleSubmitIdea}
+              >
                 Submit an Idea!
               </button>
-              <button className="btn btn-secondary mx-2" onClick={handleVoteNow}>
+              <button
+                className="btn btn-secondary mx-2"
+                onClick={handleVoteNow}
+              >
                 Vote Now!
               </button>
             </div>
           </>
         ) : (
           <>
-            <h4>Tournament has ended</h4>
-            <p>Submit your idea for the next tournament!</p>
+            <h4 className="text-center">Tournament has ended</h4>
+            <p className="text-center">
+              Submit your idea for the next tournament!
+            </p>
             <div className="d-flex justify-content-center mt-4">
-              <button className="btn btn-secondary mx-2" onClick={handleSubmitIdea}>
+              <button
+                className="btn btn-secondary mx-2"
+                onClick={handleSubmitIdea}
+              >
                 Submit an Idea!
               </button>
             </div>
@@ -193,7 +216,10 @@ function Tournament() {
         )}
 
         {!isRound1Ready && (
-          <p className="warning">⚠️ Please ensure all 16 submissions are approved before starting the tournament.</p>
+          <p className="warning">
+            ⚠️ Please ensure all 16 submissions are approved before starting the
+            tournament.
+          </p>
         )}
 
         {submissions.length === 0 ? (
@@ -219,7 +245,11 @@ function Tournament() {
             <div className="bracket-round">
               <div className="round-label">Champion</div>
               <div className="winner">
-                {finalWinner ? <>🏆 {finalWinner.title}</> : <div className="contender empty">Waiting...</div>}
+                {finalWinner ? (
+                  <>🏆 {finalWinner.title}</>
+                ) : (
+                  <div className="contender empty">Waiting...</div>
+                )}
               </div>
             </div>
           </div>
@@ -230,4 +260,3 @@ function Tournament() {
 }
 
 export default Tournament;
-
