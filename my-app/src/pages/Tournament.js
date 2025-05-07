@@ -38,16 +38,64 @@ function Tournament() {
   const [semiFinalWinners, setSemiFinalWinners] = useState(Array(2).fill(null));
   const [finalWinner, setFinalWinner] = useState(null);
   const [countdownData, setCountdownData] = useState(null);
+  const [tournamentData, setTournamentData] = useState(null);
+  const [currentRound, setCurrentRound] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
 
-  // ✅ Fetch approved submissions
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "tournamentData" || e.key === null) {
+        setRefreshKey((prevKey) => prevKey + 1);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    const loadTournamentData = () => {
+      const savedTournament = localStorage.getItem("tournamentData");
+      if (savedTournament) {
+        const parsedData = JSON.parse(savedTournament);
+        setTournamentData(parsedData);
+        if (parsedData.isActive && parsedData.rounds.length > 0) {
+          const currentRoundIndex = parsedData.currentRound;
+          if (currentRoundIndex < parsedData.rounds.length) {
+            setCurrentRound(parsedData.rounds[currentRoundIndex]);
+            setCountdownData({
+              isActive: parsedData.isActive,
+              targetDate: parsedData.rounds[currentRoundIndex].targetDate,
+            });
+          } else {
+            setCurrentRound(null);
+            setCountdownData(null);
+          }
+        } else {
+          setCurrentRound(null);
+          setCountdownData(null);
+        }
+      } else {
+        setTournamentData(null);
+        setCurrentRound(null);
+        setCountdownData(null);
+      }
+    };
+
+    loadTournamentData();
+    const intervalId = setInterval(loadTournamentData, 2000);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [refreshKey]);
+
   useEffect(() => {
     const fetchApprovedSubmissions = async () => {
       try {
         const response = await fetch("http://localhost:3001/submissions");
         const data = await response.json();
         const approved = data.filter((submission) => submission.status === "approved");
-        setSubmissions(approved.slice(0, 16)); // Ensure max 16
+        setSubmissions(approved.slice(0, 16));
       } catch (error) {
         console.error("Error fetching submissions:", error);
       }
@@ -121,9 +169,7 @@ function Tournament() {
         <h2>Tournament Bracket</h2>
         {countdownData ? (
           <>
-            {countdownData.isActive && (
-              <h4>Current round ends in ...</h4>
-            )}
+            {countdownData.isActive && <h4>Current round ends in ...</h4>}
             <CountdownTimer targetDate={countdownData.targetDate} isActive={countdownData.isActive} />
             <div className="d-flex justify-content-center mt-4">
               <button className="btn btn-secondary mx-2" onClick={handleSubmitIdea}>
@@ -146,38 +192,38 @@ function Tournament() {
           </>
         )}
 
-      {!isRound1Ready && (
-        <p className="warning">⚠️ Please ensure all 16 submissions are approved before starting the tournament.</p>
-      )}
+        {!isRound1Ready && (
+          <p className="warning">⚠️ Please ensure all 16 submissions are approved before starting the tournament.</p>
+        )}
 
-      {submissions.length === 0 ? (
-        <p>No submissions available yet.</p>
-      ) : (
-        <div className="bracket">
-          <div className="bracket-round">
-            <div className="round-label">Round 1</div>
-            {getRoundMatches(paddedSubmissions, 1, round1Winners)}
-          </div>
-          <div className="bracket-round">
-            <div className="round-label">Quarterfinals</div>
-            {getRoundMatches(round1Winners, 2, round2Winners)}
-          </div>
-          <div className="bracket-round">
-            <div className="round-label">Semifinals</div>
-            {getRoundMatches(round2Winners, 3, semiFinalWinners)}
-          </div>
-          <div className="bracket-round">
-            <div className="round-label">Final</div>
-            {getRoundMatches(semiFinalWinners, 4, [finalWinner])}
-          </div>
-          <div className="bracket-round">
-            <div className="round-label">Champion</div>
-            <div className="winner">
-              {finalWinner ? <>🏆 {finalWinner.title}</> : <div className="contender empty">Waiting...</div>}
+        {submissions.length === 0 ? (
+          <p>No submissions available yet.</p>
+        ) : (
+          <div className="bracket">
+            <div className="bracket-round">
+              <div className="round-label">Round 1</div>
+              {getRoundMatches(paddedSubmissions, 1, round1Winners)}
+            </div>
+            <div className="bracket-round">
+              <div className="round-label">Quarterfinals</div>
+              {getRoundMatches(round1Winners, 2, round2Winners)}
+            </div>
+            <div className="bracket-round">
+              <div className="round-label">Semifinals</div>
+              {getRoundMatches(round2Winners, 3, semiFinalWinners)}
+            </div>
+            <div className="bracket-round">
+              <div className="round-label">Final</div>
+              {getRoundMatches(semiFinalWinners, 4, [finalWinner])}
+            </div>
+            <div className="bracket-round">
+              <div className="round-label">Champion</div>
+              <div className="winner">
+                {finalWinner ? <>🏆 {finalWinner.title}</> : <div className="contender empty">Waiting...</div>}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );
