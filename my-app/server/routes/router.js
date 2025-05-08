@@ -44,6 +44,8 @@ router.get('/submissions', async (req, res) => {
   }
 });
 
+
+
 // Get image by submission ID
 router.get('/image/:id', async (req, res) => {
   try {
@@ -89,13 +91,35 @@ router.patch("/submissions/:submissionId/decline", async (req, res) => {
     }
     
     // Mark the submission as declined
-    submission.status = "declined"; // Assuming you're using a 'status' field
+    submission.status = "declined";
     await submission.save();
     
     res.status(200).json({ message: "Submission declined successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to decline submission" });
+  }
+});
+
+// Restore submission by ID
+router.patch("/submissions/:submissionId/restore", async (req, res) => {
+  try {
+    const submission = await schemas.Submission.findById(req.params.submissionId);
+    if (!submission) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
+    if (submission.status === "pending") {
+      return res.status(400).json({ message: "Submission is already pending" });
+    }
+
+    submission.status = "pending";
+    await submission.save();
+
+    res.status(200).json({ message: "Submission restored to pending", submission });
+  } catch (error) {
+    console.error("Error restoring submission:", error);
+    res.status(500).json({ message: "Failed to restore submission" });
   }
 });
 
