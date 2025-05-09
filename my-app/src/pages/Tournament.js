@@ -4,35 +4,6 @@ import "../styles/Tournament.css";
 import CountdownTimer from "../components/CountdownTimer";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-// ✅ Connector component
-function Connector({ fromTop, toTop }) {
-  const height = Math.abs(toTop - fromTop);
-  const top = Math.min(fromTop, toTop);
-
-  return (
-    <svg
-      style={{
-        position: "absolute",
-        top: top + "px",
-        left: "100%",
-        overflow: "visible",
-        zIndex: 0,
-      }}
-      width="80"
-      height={height}
-    >
-      <path
-        d={`M0,${fromTop - top} C20,${fromTop - top} 60,${toTop - top} 80,${
-          toTop - top
-        }`}
-        stroke="#ccc"
-        fill="transparent"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
 function Tournament() {
   const [submissions, setSubmissions] = useState([]);
   const [round1Winners, setRound1Winners] = useState(Array(8).fill(null));
@@ -60,13 +31,11 @@ function Tournament() {
         const parsedData = JSON.parse(savedTournament);
         setTournamentData(parsedData);
 
-        // Get current round
         if (parsedData.isActive && parsedData.rounds.length > 0) {
           const currentRoundIndex = parsedData.currentRound;
           if (currentRoundIndex < parsedData.rounds.length) {
             setCurrentRound(parsedData.rounds[currentRoundIndex]);
           } else {
-            // Tournament has finished all rounds
             setCurrentRound(null);
           }
         } else {
@@ -79,7 +48,6 @@ function Tournament() {
     };
 
     loadTournamentData();
-
     const intervalId = setInterval(loadTournamentData, 2000);
 
     return () => {
@@ -93,9 +61,7 @@ function Tournament() {
       try {
         const response = await fetch("http://localhost:3001/submissions");
         const data = await response.json();
-        const approved = data.filter(
-          (submission) => submission.status === "approved"
-        );
+        const approved = data.filter((submission) => submission.status === "approved");
         setSubmissions(approved.slice(0, 16));
       } catch (error) {
         console.error("Error fetching submissions:", error);
@@ -143,7 +109,25 @@ function Tournament() {
           handleClick(round, matchIndex, contenderIndex, submission)
         }
       >
-        {submission ? submission.title : "Waiting..."}
+        {submission ? (
+          <>
+            {submission.image && (
+              <img
+                className="bracket-image"
+                src={`http://localhost:3001/image/${submission._id}`}
+                alt={submission.title}
+              />
+            )}
+            <div className="bracket-title">{submission.title}</div>
+            <div className="bracket-category">{submission.category}</div>
+            <div className="bracket-description">{submission.description}</div>
+            <div className="bracket-author">
+              By <span className="name">{submission.author}</span> {submission.date}
+            </div>
+          </>
+        ) : (
+          "Waiting..."
+        )}
       </div>
     );
   };
@@ -159,19 +143,14 @@ function Tournament() {
         <div className="match" key={`round-${round}-match-${i}`}>
           {getContender(submission1, round, i, 0)}
           {getContender(submission2, round, i, 1)}
-          {nextRound && nextRound[i] && <Connector fromTop={40} toTop={40} />}
         </div>
       );
     }
     return matches;
   };
 
-  const handleSubmitIdea = () => {
-    navigate("/submission");
-  };
-  const handleVoteNow = () => {
-    navigate("/vote");
-  };
+  const handleSubmitIdea = () => navigate("/submission");
+  const handleVoteNow = () => navigate("/vote");
 
   return (
     <div className="tournament-container">
@@ -186,11 +165,9 @@ function Tournament() {
                 isActive={tournamentData.isActive}
               />
               <div className="d-flex justify-content-center mt-4">
-                <div className="px-4">
-                  <button className="btn btn-secondary" onClick={handleVoteNow}>
-                    Vote Now!
-                  </button>
-                </div>
+                <button className="btn btn-secondary" onClick={handleVoteNow}>
+                  Vote Now!
+                </button>
               </div>
             </>
           ) : (
@@ -198,14 +175,9 @@ function Tournament() {
               <h2 className="fw-bold">Tournament has ended</h2>
               <p>Submit your book idea for the next tournament.</p>
               <div className="d-flex justify-content-center mt-4">
-                <div className="px-4">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={handleSubmitIdea}
-                  >
-                    Submit an Idea!
-                  </button>
-                </div>
+                <button className="btn btn-secondary" onClick={handleSubmitIdea}>
+                  Submit an Idea!
+                </button>
               </div>
             </>
           )}
@@ -218,7 +190,6 @@ function Tournament() {
             tournament.
           </p>
         )}
-
         {submissions.length === 0 ? (
           <p>No submissions available yet.</p>
         ) : (

@@ -18,9 +18,10 @@
   display: flex;
   flex-wrap: nowrap;
   justify-content: flex-start;
-  align-items: flex-start;
-  gap: 60px;
+  align-items: center;
+  gap: 80px;
   min-width: 800px; /* ensure horizontal scroll on small screens */
+  padding: 50px 20px;
 }
 
 .bracket-round {
@@ -34,20 +35,36 @@
 
 .round-label {
   font-weight: bold;
-  margin-bottom: 10px;
-  font-size: 1rem;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
   color: #555;
   text-align: center;
+}
+
+/* Adjust spacing between matches in each round */
+.bracket-round:nth-child(1) .match {
+  margin-bottom: 15px;
+}
+
+.bracket-round:nth-child(2) .match {
+  margin-bottom: 85px;
+}
+
+.bracket-round:nth-child(3) .match {
+  margin-bottom: 225px;
+}
+
+.bracket-round:nth-child(4) .match {
+  margin-bottom: 0;
 }
 
 .match {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 15px;
   position: relative;
-  margin-bottom: 30px;
-  padding-bottom: 30px;
+  width: 100%;
 }
 
 .contender {
@@ -61,6 +78,8 @@
   border: 1px solid #ccc;
   z-index: 1;
   word-break: break-word;
+  position: relative;
+  width: 100%;
 }
 
 .contender:hover {
@@ -73,13 +92,19 @@
   pointer-events: none;
 }
 
+.contender.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Add connecting lines */
 .match::after {
   content: '';
   position: absolute;
-  width: 40px;
+  width: 30px;
   height: 2px;
   background-color: #ccc;
-  right: -40px;
+  right: -30px;
   top: 50%;
   transform: translateY(-50%);
 }
@@ -88,85 +113,51 @@
   display: none;
 }
 
+/* Vertical lines for bracket structure */
+.bracket-round:not(:first-child) .match::before {
+  content: '';
+  position: absolute;
+  height: calc(100% + 15px);
+  width: 2px;
+  background-color: #ccc;
+  left: -50px;
+  top: -7.5px;
+}
+
 .winner {
   margin-top: 30px;
   text-align: center;
   font-size: 1.8rem;
   color: #28a745;
   font-weight: bold;
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #28a745;
+  min-width: 180px;
 }
 
-.submission-card {
-  width: 100%;
-  max-width: 300px;
-  background: white;
-  padding: 0.4em;
-  border-radius: 6px;
-  text-align: left;
-  margin: 20px auto;
-  box-sizing: border-box;
+.warning {
+  color: #dc3545;
+  background-color: #fff3cd;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  text-align: center;
 }
 
-.submission-card:hover {
-  transform: scale(1.01);
-  transition: transform 0.3s ease;
+/* Remove default connector since we're using our own */
+svg {
+  display: none;
 }
 
-.card-image {
-  background-color: rgb(236, 236, 236);
-  width: 100%;
-  height: 130px;
-  border-radius: 6px 6px 0 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.category {
-  text-transform: uppercase;
-  font-size: 0.7em;
-  font-weight: 600;
-  color: rgb(0, 0, 0);
-  padding: 10px 7px 0;
-}
-
-.heading {
-  font-weight: 700;
-  font-size: large;
-  color: rgb(88, 87, 87);
-  padding: 5px;
-}
-
-.heading:hover {
-  cursor: pointer;
-}
-
-.description {
-  font-size: small;
-  padding: 5px;
-}
-
-.author {
-  color: gray;
-  font-weight: 400;
-  font-size: 11px;
-  padding-top: 10px;
-  padding-left: 7px;
-  padding-bottom: 2px;
-}
-
-/* ✅ Responsive tweaks */
+/* Responsive tweaks */
 @media (max-width: 1024px) {
   .bracket {
-    gap: 40px;
+    gap: 60px;
   }
   .bracket-round {
-    gap: 20px;
     min-width: 160px;
-  }
-  .match {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
   }
   .contender {
     min-width: 120px;
@@ -175,19 +166,68 @@
   }
   .winner {
     font-size: 1.5rem;
+    min-width: 160px;
+  }
+  
+  .bracket-round:nth-child(2) .match {
+    margin-bottom: 65px;
+  }
+  
+  .bracket-round:nth-child(3) .match {
+    margin-bottom: 175px;
   }
 }
 
 @media (max-width: 768px) {
   .bracket {
-    gap: 30px;
-    min-width: 600px;
+    gap: 50px;
+    min-width: 650px;
   }
   .bracket-round {
-    min-width: 140px;
+    min-width: 130px;
   }
   .contender {
     min-width: 100px;
     font-size: 0.85rem;
   }
+  
+  .bracket-round:nth-child(2) .match {
+    margin-bottom: 50px;
+  }
+  
+  .bracket-round:nth-child(3) .match {
+    margin-bottom: 150px;
+  }
+}
+
+/* NEW: Show image + submission info inside bracket box */
+.bracket-image {
+  width: 100%;
+  max-height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.bracket-title {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.bracket-category {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.bracket-description {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.bracket-author {
+  font-size: 0.75rem;
+  color: #888;
 }
