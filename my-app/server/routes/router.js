@@ -60,7 +60,7 @@ router.get('/image/:id', async (req, res) => {
   }
 });
 
-// Approve a submission by ID
+// Approve submission
 router.patch('/submissions/:id/approve', async (req, res) => {
   try {
     const submission = await schemas.Submission.findByIdAndUpdate(
@@ -68,11 +68,7 @@ router.patch('/submissions/:id/approve', async (req, res) => {
       { status: "approved" },
       { new: true }
     );
-
-    if (!submission) {
-      return res.status(404).json({ message: "Submission not found" });
-    }
-
+    if (!submission) return res.status(404).json({ message: "Submission not found" });
     res.status(200).json({ message: "Submission approved", submission });
   } catch (error) {
     console.error("Error approving submission:", error);
@@ -80,22 +76,50 @@ router.patch('/submissions/:id/approve', async (req, res) => {
   }
 });
 
-// Decline a submission by ID
+// Decline submission
 router.patch("/submissions/:submissionId/decline", async (req, res) => {
   try {
     const submission = await schemas.Submission.findById(req.params.submissionId);
-    if (!submission) {
-      return res.status(404).json({ message: "Submission not found" });
-    }
-    
-    // Mark the submission as declined
-    submission.status = "declined"; // Assuming you're using a 'status' field
+    if (!submission) return res.status(404).json({ message: "Submission not found" });
+    submission.status = "declined";
     await submission.save();
-    
     res.status(200).json({ message: "Submission declined successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to decline submission" });
+  }
+});
+
+// Restore submission
+router.patch("/submissions/:submissionId/restore", async (req, res) => {
+  try {
+    const submission = await schemas.Submission.findById(req.params.submissionId);
+    if (!submission) return res.status(404).json({ message: "Submission not found" });
+    if (submission.status === "pending") {
+      return res.status(400).json({ message: "Submission is already pending" });
+    }
+    submission.status = "pending";
+    await submission.save();
+    res.status(200).json({ message: "Submission restored to pending", submission });
+  } catch (error) {
+    console.error("Error restoring submission:", error);
+    res.status(500).json({ message: "Failed to restore submission" });
+  }
+});
+
+// ✅ Vote endpoint (this is the new one!)
+router.patch('/submissions/:id/vote', async (req, res) => {
+  try {
+    const submission = await schemas.Submission.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { votes: 1 } },
+      { new: true }
+    );
+    if (!submission) return res.status(404).json({ message: "Submission not found" });
+    res.status(200).json({ message: "Vote recorded", submission });
+  } catch (error) {
+    console.error("Error voting on submission:", error);
+    res.status(500).json({ message: "Error voting on submission" });
   }
 });
 

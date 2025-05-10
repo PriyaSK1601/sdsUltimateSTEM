@@ -13,6 +13,7 @@ function Profile() {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [submissions, setSubmissions] = useState([]);
+  const [userSubmissions, setUserSubmissions] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +32,27 @@ function Profile() {
     if (user?.email === "admin@gmail.com") {
       fetchSubmissions();
     }
+
+    if (user?.email !== "admin@gmail.com") {
+      const fetchUserSubmissions = async () => {
+        console.log("Full name:", getFullName());
+        try {
+          const response = await fetch("http://localhost:3001/submissions");
+          const data = await response.json();
+          const userSubmissions = data.filter(submission =>
+            submission.author?.toLowerCase() === getFullName().toLowerCase()
+          );
+          setSubmissions(userSubmissions);
+        } catch (error) {
+          console.error("Error fetching user submissions:", error);
+        }
+      };
+      
+      if (user && user.email !== "admin@gmail.com") {
+        fetchUserSubmissions();
+      }
+    }
+
   }, [user]);
 
   useEffect(() => {
@@ -62,7 +84,7 @@ function Profile() {
 
     return () => unsubscribe();
   }, [navigate]);
-
+  
   const handleLogout = () => {
     signOut(auth).then(() => {
       navigate("/login");
@@ -72,6 +94,10 @@ function Profile() {
   const handleEditCountdown = () => {
     navigate("/edit-countdown");
   };
+
+  const handleViewAllSubmissions = () => {
+    navigate("/viewAllSubmissions");
+  }
 
   const getFullName = () => {
     if (userData && userData.firstName && userData.lastName) {
@@ -182,7 +208,35 @@ function Profile() {
                 ) : (
                   <div>
                     <h2 className="mb-4">Previous Submissions</h2>
-                    <div className="item-box"></div>{" "}
+                    {}
+                    <div className="submissions-scroll-container">
+                    <div className="submissions-list">
+                      {submissions.length > 0 ? (
+                        submissions.map((submission, index) => (
+                          <div className="view-submission-card" key={index}>
+                            {submission.image && (
+                              <img
+                                className="view-card-image"
+                                src={`http://localhost:3001/image/${submission._id}`}
+                                alt={submission.title}
+                              />
+                            )}
+                            <div className="card-content">
+                              <div className="category">{submission.category}</div>
+                              <div className="heading">{submission.title}</div>
+                              <div className="description">{submission.description}</div>
+                              <div className="author">
+                                Status: <span className="name">{submission.status}</span> |{" "}
+                                {new Date(submission.entryDate).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p>You haven't submitted anything yet.</p>
+                      )}
+                    </div>                    
+                    </div>
                   </div>
                 )}
               </div>
@@ -232,13 +286,17 @@ function Profile() {
                   <div>
                     <h2 className="mb-4">Admin Tools</h2>
                     <div className="py-1">
-                      <button
-                        className="btn btn-secondary"
-                        onClick={handleEditCountdown}
-                      >
+                    <div className="mb-2">
+                      <button className="btn btn-secondary w-100" onClick={handleEditCountdown}>
                         Edit countdown
                       </button>
                     </div>
+                    <div>
+                      <button className="btn btn-secondary w-100" onClick={handleViewAllSubmissions}>
+                        View/Restore all submissions
+                      </button>
+                    </div>
+                </div>
                   </div>
                 ) : (
                   <div>
@@ -251,13 +309,6 @@ function Profile() {
                   </div>
                 )}
               </div>
-              {user.email === "admin@gmail.com" && (
-                <div className="row">
-                  <div className="col-md-12">
-                    <AdminAnalytics />
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </>

@@ -21,34 +21,28 @@ function Submission({ onSubmit }) {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        try {
-          const userDocRef = doc(db, "Users", user.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            const fullName = data.firstName && data.lastName
-              ? `${data.firstName} ${data.lastName}`
-              : data.firstName || user.displayName || user.email.split("@")[0];
-            setAuthor(fullName);
-          } else {
-            setAuthor(user.displayName || user.email.split("@")[0]);
-          }
-        } catch (err) {
-          console.error("Failed to fetch user info", err);
-        }
+        const fullName = user.displayName 
+          ? capitalizeFirstLetter(user.displayName) 
+          : capitalizeFirstLetter(user.email.split("@")[0]);
+        setAuthor(fullName);
       }
     });
     return () => unsubscribe();
   }, []);
+
+  const capitalizeFirstLetter = (string) => {
+    if (!string) return "";
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  };
 
   const axiosPostData = async () => {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
     formData.append("category", category);
-    formData.append("author", author); // <-- Add this
+    formData.append("author", author); 
     if (image) {
       formData.append("image", image);
     }
@@ -89,6 +83,7 @@ function Submission({ onSubmit }) {
   };
 
   return (
+    <div className="bg">
     <div className="container-submission">
       <div className="submission-header">
         <h2>Tournament Submission</h2>
@@ -144,6 +139,7 @@ function Submission({ onSubmit }) {
         <button type="submit" className="btn btn-dark">Submit</button>
       </form>
       {message && <p className="message">{message}</p>}
+    </div>
     </div>
   );
 }
