@@ -1,25 +1,126 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const upload = multer();
+const schemas = require('../models/schemas');
 
-const multer = require('multer');  // Import multer
-const upload = multer();  // You can use the default multer setup or customize it as needed
-const schemas = require('../models/schemas')
+// Create new submission
+router.post('/contact', upload.single('image'), async (req, res) => {
+  const { title, description, category, author } = req.body;
 
-router.post('/contact', upload.single('image'),async (req, res) => {  // Use upload.single('image') to handle the image file
-    const { title, description, category } = req.body;
-  
-    const image = req.file ? req.file.path : null;  // If an image was uploaded, store the file path
+  const submissionData = {
+    title,
+    description,
+    category,
+    author,
+    status: "pending",
+  };
+
+  if (req.file) {
+    submissionData.image = {
+      data: req.file.buffer,
+      contentType: req.file.mimetype
+    };
+  }
+
+  try {
+    const newSubmission = new schemas.Submission(submissionData);
+    await newSubmission.save();
+    res.status(201).send('Submission Success');
+  } catch (error) {
+    console.error("Submission failed:", error);
+    res.status(500).send("Submission failed");
+  }
+});
+
+// Get all submissions
+router.get('/submissions', async (req, res) => {
+  try {
+    const submissions = await schemas.Submission.find();
+    res.json(submissions);
+  } catch (error) {
+    console.error("Error fetching submissions:", error);
+    res.status(500).json({ message: "Error fetching submissions" });
+  }
+});
 
 
-    const submissionData = {title: title, description: description, category: category}
-    const newSubmission = new schemas.Submission(submissionData)
-    const saveSubmission = await newSubmission.save()
-    if(saveSubmission) {
-        res.send('Submission Success');
-    } else {
-        res.send("Submisison failed");
+
+// Get image by submission ID
+router.get('/image/:id', async (req, res) => {
+  try {
+    const submission = await schemas.Submission.findById(req.params.id);
+    if (!submission || !submission.image || !submission.image.data) {
+      return res.status(404).send('Image not found');
+    }
+
+    res.contentType(submission.image.contentType);
+    res.send(submission.image.data);
+  } catch (err) {
+    console.error("Failed to get image:", err);
+    res.status(500).send("Error retrieving image");
+  }
+});
+
+// Approve a submission by ID
+router.patch('/submissions/:id/approve', async (req, res) => {
+  try {
+    const submission = await schemas.Submission.findByIdAndUpdate(
+      req.params.id,
+      { status: "approved" },
+      { new: true }
+    );
+
+    if (!submission) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
+    res.status(200).json({ message: "Submission approved", submission });
+  } catch (error) {
+    console.error("Error approving submission:", error);
+    res.status(500).json({ message: "Error approving submission" });
+  }
+});
+
+// Decline a submission by ID
+router.patch("/submissions/:submissionId/decline", async (req, res) => {
+  try {
+    const submission = await schemas.Submission.findById(req.params.submissionId);
+    if (!submission) {
+      return res.status(404).json({ message: "Submission not found" });
     }
     
+    // Mark the submission as declined
+    submission.status = "declined";
+    await submission.save();
+    
+    res.status(200).json({ message: "Submission declined successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to decline submission" });
+  }
+});
+
+// Restore submission by ID
+router.patch("/submissions/:submissionId/restore", async (req, res) => {
+  try {
+    const submission = await schemas.Submission.findById(req.params.submissionId);
+    if (!submission) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
+    if (submission.status === "pending") {
+      return res.status(400).json({ message: "Submission is already pending" });
+    }
+
+    submission.status = "pending";
+    await submission.save();
+
+    res.status(200).json({ message: "Submission restored to pending", submission });
+  } catch (error) {
+    console.error("Error restoring submission:", error);
+    res.status(500).json({ message: "Failed to restore submission" });
+  }
 });
 
 module.exports = router;

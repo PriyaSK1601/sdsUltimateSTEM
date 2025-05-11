@@ -7,9 +7,28 @@ import "bootstrap/dist/css/bootstrap.min.css";
 function Tournament({ submissions }) {
   const [tournamentData, setTournamentData] = useState(null);
   const [currentRound, setCurrentRound] = useState(null);
-  const navigate = useNavigate();
 
   const [refreshKey, setRefreshKey] = useState(0);
+  const [submissions, setSubmissions] = useState([]);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchApprovedSubmissions = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/submissions");
+        const data = await response.json();
+        const approved = data.filter(
+          (submission) => submission.status === "approved"
+        );
+        setSubmissions(approved);
+      } catch (error) {
+        console.error("Error fetching submissions:", error);
+      }
+    };
+
+    fetchApprovedSubmissions();
+  }, []);
 
   useEffect(() => {
     const handleStorageChange = (e) => {
@@ -111,27 +130,32 @@ function Tournament({ submissions }) {
             <p className="py-4">No Submissions</p>
           ) : (
             <div className="submissions-list">
-              {submissions.map((submission, index) => (
-                <div className="submission-card" key={index}>
-                  <div
-                    className="card-image"
-                    style={{
-                      backgroundImage: submission.image
-                        ? `url(${submission.image})`
-                        : "none",
-                    }}
-                  ></div>
-                  <div className="card-content">
-                    <div className="category">{submission.category}</div>
-                    <div className="heading">{submission.title}</div>
-                    <div className="description">{submission.description}</div>
-                    <div className="author">
-                      By <span className="name">{submission.author}</span>{" "}
-                      {submission.date}
+              {submissions
+                .filter((sub) => sub.status === "approved")
+                .map((submission, index) => (
+                  <div className="submission-card" key={index}>
+                    {/* Fetch the image URL dynamically from your API */}
+                    <div
+                      className="card-image"
+                      style={{
+                        backgroundImage: `url(http://localhost:3001/image/${submission._id})`, // Correctly set the image URL
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    ></div>
+                    <div className="card-content">
+                      <div className="category">{submission.category}</div>
+                      <div className="heading">{submission.title}</div>
+                      <div className="description">
+                        {submission.description}
+                      </div>
+                      <div className="author">
+                        By <span className="name">{submission.author}</span>{" "}
+                        {submission.date}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>

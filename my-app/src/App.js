@@ -19,6 +19,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { auth } from "./pages/firebase";
 import { Navigate } from "react-router-dom";
+import ViewAllSubmissions from "./pages/ViewAllSubmissions";
 
 //Changed
 
@@ -43,31 +44,18 @@ function App() {
           <Router>
             <Navbar />
             <Routes>
-              <Route
-                path="/"
-                exact
-                element={<Home submissions={submissions} />}
-              />
-              <Route
-                path="/home"
-                exact
-                element={<Home submissions={submissions} />}
-              />
+              <Route path="/" exact element={<Home submissions={submissions} />} />
+              <Route path="/home" exact element={<Home submissions={submissions} />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<SignUp />} />
               <Route path="/forgotPass" element={<ForgotPass />} />
               <Route path="/adminLogin" element={<AdminLogin />} />
-              <Route
-                path="/submission"
-                element={<Submission onSubmit={handleNewSubmission} />}
-              />
-              <Route
-                path="/tournament"
-                element={<Tournament submissions={submissions} />}
-              />
+              <Route path="/submission" element={<Submission onSubmit={handleNewSubmission} />}/>
+              <Route path="/tournament" element={<Tournament submissions={submissions} />} />
               <Route path="/vote" element={<Vote />} />
               <Route path="/edit-countdown" element={<EditCountdown />} />
+              <Route path="/viewAllSubmissions" element={<ViewAllSubmissions/>} />
             </Routes>
           </Router>
         </div>

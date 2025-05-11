@@ -7,6 +7,7 @@ import axios from "axios";
 import { auth , db } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 function Submission({ onSubmit }) {
   const [title, setTitle] = useState("");
@@ -15,44 +16,39 @@ function Submission({ onSubmit }) {
   const [message, setMessage] = useState("");
   const [image, setImage] = useState(null);
   const [author, setAuthor] = useState("Anonymous");
+  const navigate = useNavigate();
   
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        try {
-          const userDocRef = doc(db, "Users", user.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            const fullName = data.firstName && data.lastName
-              ? `${data.firstName} ${data.lastName}`
-              : data.firstName || user.displayName || user.email.split("@")[0];
-            setAuthor(fullName);
-          } else {
-            setAuthor(user.displayName || user.email.split("@")[0]);
-          }
-        } catch (err) {
-          console.error("Failed to fetch user info", err);
-        }
+        const fullName = user.displayName 
+          ? capitalizeFirstLetter(user.displayName) 
+          : capitalizeFirstLetter(user.email.split("@")[0]);
+        setAuthor(fullName);
       }
     });
     return () => unsubscribe();
   }, []);
+
+  const capitalizeFirstLetter = (string) => {
+    if (!string) return "";
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  };
 
   const axiosPostData = async () => {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
     formData.append("category", category);
-    formData.append("author", author);
+    formData.append("author", author); 
     if (image) {
       formData.append("image", image);
     }
   
     try {
-      const response = await axios.post('http://localhost:3001/contact', formData, {
+      await axios.post('http://localhost:3001/contact', formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         }
@@ -64,30 +60,19 @@ function Submission({ onSubmit }) {
   
   const handleSubmit = (event) => {
     event.preventDefault();
-
+  
     if (!title.trim() || !description.trim() || !category) {
       setMessage("All fields are required.");
       return;
     }
-    
-    axiosPostData()
-
-    const submissionData = {
-      title,
-      description,
-      category,
-      image: image ? URL.createObjectURL(image) : null,
-      author,
-      date: new Date().toLocaleDateString(),
-    };
-
-    onSubmit(submissionData);
-
-    setMessage("Submission Successful!");
+  
+    axiosPostData();
+  
     setTitle("");
     setDescription("");
     setCategory("");
     setImage(null);
+    navigate("/tournament"); 
   };
 
   const handleImageInput = (event) => {
@@ -98,6 +83,7 @@ function Submission({ onSubmit }) {
   };
 
   return (
+    <div className="bg">
     <div className="container-submission">
       <div className="submission-header">
         <h2>Tournament Submission</h2>
@@ -153,6 +139,7 @@ function Submission({ onSubmit }) {
         <button type="submit" className="btn btn-dark">Submit</button>
       </form>
       {message && <p className="message">{message}</p>}
+    </div>
     </div>
   );
 }
