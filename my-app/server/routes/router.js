@@ -1,11 +1,11 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const multer = require('multer');
+const multer = require("multer");
 const upload = multer();
-const schemas = require('../models/schemas');
+const schemas = require("../models/schemas");
 
 // Create new submission
-router.post('/contact', upload.single('image'), async (req, res) => {
+router.post("/contact", upload.single("image"), async (req, res) => {
   const { title, description, category, author } = req.body;
 
   const submissionData = {
@@ -19,14 +19,14 @@ router.post('/contact', upload.single('image'), async (req, res) => {
   if (req.file) {
     submissionData.image = {
       data: req.file.buffer,
-      contentType: req.file.mimetype
+      contentType: req.file.mimetype,
     };
   }
 
   try {
     const newSubmission = new schemas.Submission(submissionData);
     await newSubmission.save();
-    res.status(201).send('Submission Success');
+    res.status(201).send("Submission Success");
   } catch (error) {
     console.error("Submission failed:", error);
     res.status(500).send("Submission failed");
@@ -34,7 +34,7 @@ router.post('/contact', upload.single('image'), async (req, res) => {
 });
 
 // Get all submissions
-router.get('/submissions', async (req, res) => {
+router.get("/submissions", async (req, res) => {
   try {
     const submissions = await schemas.Submission.find();
     res.json(submissions);
@@ -44,14 +44,12 @@ router.get('/submissions', async (req, res) => {
   }
 });
 
-
-
 // Get image by submission ID
-router.get('/image/:id', async (req, res) => {
+router.get("/image/:id", async (req, res) => {
   try {
     const submission = await schemas.Submission.findById(req.params.id);
     if (!submission || !submission.image || !submission.image.data) {
-      return res.status(404).send('Image not found');
+      return res.status(404).send("Image not found");
     }
 
     res.contentType(submission.image.contentType);
@@ -62,19 +60,16 @@ router.get('/image/:id', async (req, res) => {
   }
 });
 
-// Approve a submission by ID
-router.patch('/submissions/:id/approve', async (req, res) => {
+// Approve submission
+router.patch("/submissions/:id/approve", async (req, res) => {
   try {
     const submission = await schemas.Submission.findByIdAndUpdate(
       req.params.id,
       { status: "approved" },
       { new: true }
     );
-
-    if (!submission) {
+    if (!submission)
       return res.status(404).json({ message: "Submission not found" });
-    }
-
     res.status(200).json({ message: "Submission approved", submission });
   } catch (error) {
     console.error("Error approving submission:", error);
@@ -82,18 +77,19 @@ router.patch('/submissions/:id/approve', async (req, res) => {
   }
 });
 
-// Decline a submission by ID
+// Decline submission
 router.patch("/submissions/:submissionId/decline", async (req, res) => {
   try {
-    const submission = await schemas.Submission.findById(req.params.submissionId);
+    const submission = await schemas.Submission.findById(
+      req.params.submissionId
+    );
     if (!submission) {
       return res.status(404).json({ message: "Submission not found" });
     }
-    
+
     // Mark the submission as declined
     submission.status = "declined";
     await submission.save();
-    
     res.status(200).json({ message: "Submission declined successfully" });
   } catch (err) {
     console.error(err);
@@ -104,7 +100,9 @@ router.patch("/submissions/:submissionId/decline", async (req, res) => {
 // Restore submission by ID
 router.patch("/submissions/:submissionId/restore", async (req, res) => {
   try {
-    const submission = await schemas.Submission.findById(req.params.submissionId);
+    const submission = await schemas.Submission.findById(
+      req.params.submissionId
+    );
     if (!submission) {
       return res.status(404).json({ message: "Submission not found" });
     }
@@ -116,10 +114,29 @@ router.patch("/submissions/:submissionId/restore", async (req, res) => {
     submission.status = "pending";
     await submission.save();
 
-    res.status(200).json({ message: "Submission restored to pending", submission });
+    res
+      .status(200)
+      .json({ message: "Submission restored to pending", submission });
   } catch (error) {
     console.error("Error restoring submission:", error);
     res.status(500).json({ message: "Failed to restore submission" });
+  }
+});
+
+// ✅ Vote endpoint (this is the new one!)
+router.patch("/submissions/:id/vote", async (req, res) => {
+  try {
+    const submission = await schemas.Submission.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { votes: 1 } },
+      { new: true }
+    );
+    if (!submission)
+      return res.status(404).json({ message: "Submission not found" });
+    res.status(200).json({ message: "Vote recorded", submission });
+  } catch (error) {
+    console.error("Error voting on submission:", error);
+    res.status(500).json({ message: "Error voting on submission" });
   }
 });
 
