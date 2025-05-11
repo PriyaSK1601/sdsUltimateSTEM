@@ -14,7 +14,13 @@ function Tournament({ submissions }) {
   const [semiFinalWinners, setSemiFinalWinners] = useState(Array(2).fill(null));
   const [finalWinner, setFinalWinner] = useState(null);
   const [countdownData, setCountdownData] = useState(null);
-
+  // Track voted matches to disable the other option
+  const [votedMatches, setVotedMatches] = useState({
+    round1: Array(8).fill(null),
+    round2: Array(4).fill(null),
+    round3: Array(2).fill(null),
+    round4: Array(1).fill(null),
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -83,6 +89,12 @@ function Tournament({ submissions }) {
           (submission) => submission.status === "approved"
         );
         setSubmissions(approved.slice(0, 16));
+
+        // Attempt to load voted matches from localStorage
+        const savedVotes = localStorage.getItem("tournamentVotes");
+        if (savedVotes) {
+          setVotedMatches(JSON.parse(savedVotes));
+        }
       } catch (error) {
         console.error("Error fetching submissions:", error);
       }
@@ -118,6 +130,21 @@ function Tournament({ submissions }) {
         );
         setSubmissions(updatedSubmissions);
 
+        // Update the voted matches tracking
+        const roundKey = `round${round}`;
+        const newVotedMatches = { ...votedMatches };
+
+        // Store which contender was selected (0 or 1)
+        newVotedMatches[roundKey][matchIndex] = contenderIndex;
+
+        setVotedMatches(newVotedMatches);
+
+        // Save to localStorage
+        localStorage.setItem(
+          "tournamentVotes",
+          JSON.stringify(newVotedMatches)
+        );
+
         alert(`✅ Your vote for "${submission.title}" has been recorded!`);
       } else {
         console.error("Vote failed:", await response.text());
@@ -130,6 +157,10 @@ function Tournament({ submissions }) {
   };
 
   const getContender = (submission, round, matchIndex, contenderIndex) => {
+    if (!submission) {
+      return <div className="contender empty">Waiting...</div>;
+    }
+
     const roundWinners =
       round === 1
         ? round1Winners
@@ -142,45 +173,48 @@ function Tournament({ submissions }) {
         : [];
 
     const winner = roundWinners[matchIndex];
-    const isSelected = winner && winner._id === submission?._id;
+    const isSelected = winner && winner._id === submission._id;
+
+    // Check if this match has been voted on
+    const roundKey = `round${round}`;
+    const votedContenderIndex = votedMatches[roundKey][matchIndex];
+
+    // This contender is disabled if another contender in this match was voted for
+    const isDisabled =
+      votedContenderIndex !== null && votedContenderIndex !== contenderIndex;
 
     return (
-      <div className={`contender ${!submission ? "empty" : ""}`}>
-        {submission ? (
-          <>
-            {submission.image && (
-              <img
-                className="bracket-image"
-                src={`http://localhost:3001/image/${submission._id}`}
-                alt={submission.title}
-              />
-            )}
-            <div className="card-content">
-              <div className="bracket-title">{submission.title}</div>
-              <div className="bracket-category">{submission.category}</div>
-              <div className="bracket-description">
-                {submission.description}
-              </div>
-              <div className="bracket-author">
-                By <span className="name">{submission.author}</span>{" "}
-                {submission.date}
-              </div>
-              <div className="bracket-votes">Votes: {submission.votes}</div>
-              <button
-                className={`btn btn-sm mt-2 ${
-                  isSelected ? "btn-success" : "btn-outline-success"
-                }`}
-                onClick={() =>
-                  handleClick(round, matchIndex, contenderIndex, submission)
-                }
-              >
-                👍 Vote
-              </button>
-            </div>
-          </>
-        ) : (
-          "Waiting..."
+      <div className={`contender ${isDisabled ? "disabled" : ""}`}>
+        {submission.image && (
+          <img
+            className="bracket-image"
+            src={`http://localhost:3001/image/${submission._id}`}
+            alt={submission.title}
+          />
         )}
+        <div className="card-content">
+          <div className="bracket-title">{submission.title}</div>
+          <div className="bracket-category">{submission.category}</div>
+          <div className="bracket-description">{submission.description}</div>
+          <div className="bracket-author">
+            By <span className="name">{submission.author}</span>{" "}
+            {submission.date}
+          </div>
+          <div className="bracket-votes">Votes: {submission.votes}</div>
+          <button
+            className={`btn btn-sm mt-2 ${
+              votedContenderIndex === contenderIndex
+                ? "btn-success"
+                : "btn-outline-success"
+            }`}
+            onClick={() =>
+              handleClick(round, matchIndex, contenderIndex, submission)
+            }
+            disabled={isDisabled}
+          >
+            {votedContenderIndex === contenderIndex ? "✓ Voted" : "👍 Vote"}
+          </button>
+        </div>
       </div>
     );
   };
@@ -287,15 +321,15 @@ function Tournament({ submissions }) {
               {getRoundMatches(paddedSubmissions, 1)}
             </div>
             <div className="bracket-round">
-              <div className="round-label">Quarterfinals</div>
+              <div className="round-label">Round 2</div>
               {getRoundMatches(round1Winners, 2)}
             </div>
             <div className="bracket-round">
-              <div className="round-label">Semifinals</div>
+              <div className="round-label">Round 3</div>
               {getRoundMatches(round2Winners, 3)}
             </div>
             <div className="bracket-round">
-              <div className="round-label">Final</div>
+              <div className="round-label">Round 4</div>
               {getRoundMatches(semiFinalWinners, 4)}
             </div>
             <div className="bracket-round">
