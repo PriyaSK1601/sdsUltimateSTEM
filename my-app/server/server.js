@@ -1,8 +1,10 @@
 const express = require('express');      
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const multer = require('multer');  // Import multer
 const router = require('./routes/router');
+const { MongooseError } = require('mongoose');
+const mongoose = require('mongoose')
+require('dotenv/config')
 
 const app = express();
 app.use(bodyParser.json());
@@ -15,20 +17,15 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');  // You can specify the folder to save the uploaded files
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname);  // Rename the file to avoid conflicts
-    }
-});
-const upload = multer({ storage: storage });
-
 app.use('/', router);
 
-const port = 3001;
+const dbOptions = {useNewUrlParser:true, useUnifiedTopology:true}
+mongoose.connect(process.env.DB_URI)
+  .then(() => console.log('MongoDB is connected!'))
+  .catch(err => console.log(err));
+
+
+const port = process.env.PORT || 3001
 const server = app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });

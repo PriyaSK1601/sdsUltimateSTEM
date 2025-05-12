@@ -1,67 +1,78 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import UploadIcon from "../assets/upload.png";
 import UploadedIcon from "../assets/uploaded.png";
 import '../styles/Submission.css';
 import axios from "axios";
+import { auth , db } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 function Submission({ onSubmit }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [message, setMessage] = useState("");
-  const [error, setError]= useState('')
   const [image, setImage] = useState(null);
+  const [author, setAuthor] = useState("Anonymous");
+  const navigate = useNavigate();
   
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const fullName = user.displayName 
+          ? capitalizeFirstLetter(user.displayName) 
+          : capitalizeFirstLetter(user.email.split("@")[0]);
+        setAuthor(fullName);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const capitalizeFirstLetter = (string) => {
+    if (!string) return "";
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  };
 
   const axiosPostData = async () => {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
     formData.append("category", category);
+    formData.append("author", author); 
     if (image) {
       formData.append("image", image);
     }
   
     try {
-      const response = await axios.post('http://localhost:3001/contact', formData, {
+      await axios.post('http://localhost:3001/contact', formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-        },
+        }
       });
-      setError(<p className="success">{response.data}</p>);
-    } catch (error) {
-      console.error("There was an error submitting the form!", error);
-      setError(<p className="error">There was an error submitting the form. Please try again later.</p>);
+    } catch (e) {
+      setMessage("Error submitting form, try again!")
     }
   };
   
   const handleSubmit = (event) => {
     event.preventDefault();
-
+  
     if (!title.trim() || !description.trim() || !category) {
       setMessage("All fields are required.");
       return;
     }
-    setError(' ')
-    axiosPostData()
-
-
-
-    const submissionData = {
-      title,
-      description,
-      category,
-      image: image ? URL.createObjectURL(image) : null,
-    };
-    onSubmit(submissionData);
-
-    setMessage("Submission Successful!");
+  
+    axiosPostData();
+  
     setTitle("");
     setDescription("");
     setCategory("");
     setImage(null);
+    navigate("/tournament"); 
   };
 
   const handleImageInput = (event) => {
@@ -72,6 +83,7 @@ function Submission({ onSubmit }) {
   };
 
   return (
+    <div className="bg">
     <div className="container-submission">
       <div className="submission-header">
         <h2>Tournament Submission</h2>
@@ -127,7 +139,7 @@ function Submission({ onSubmit }) {
         <button type="submit" className="btn btn-dark">Submit</button>
       </form>
       {message && <p className="message">{message}</p>}
-      {error}
+    </div>
     </div>
   );
 }

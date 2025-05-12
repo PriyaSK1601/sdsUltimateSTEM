@@ -1,27 +1,69 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/profile.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 import profileIcon from "../assets/profile_icon.png";
 import { auth, db } from "./firebase";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import AdminAnalytics from "../components/adminAnalytics";
+import { logPageVisit } from "../utils/analytics";
 
 function Profile() {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
+  const [userSubmissions, setUserSubmissions] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/submissions");
+        const data = await response.json();
+        // Filter out submissions with status 'approved' or 'declined'
+        const pendingSubmissions = data.filter(submission => submission.status === "pending");
+        setSubmissions(pendingSubmissions);
+      } catch (error) {
+        console.error("Error fetching submissions:", error);
+      }
+    };
+  
+    if (user?.email === "admin@gmail.com") {
+      fetchSubmissions();
+    }
+
+    if (user?.email !== "admin@gmail.com") {
+      const fetchUserSubmissions = async () => {
+        console.log("Full name:", getFullName());
+        try {
+          const response = await fetch("http://localhost:3001/submissions");
+          const data = await response.json();
+          const userSubmissions = data.filter(submission =>
+            submission.author?.toLowerCase() === getFullName().toLowerCase()
+          );
+          setSubmissions(userSubmissions);
+        } catch (error) {
+          console.error("Error fetching user submissions:", error);
+        }
+      };
+      
+      if (user && user.email !== "admin@gmail.com") {
+        fetchUserSubmissions();
+      }
+    }
+
+  }, [user]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
 
-        //fetch user data from firestore database
         const fetchUserData = async () => {
           try {
             const userDocRef = doc(db, "Users", currentUser.uid);
             const userDoc = await getDoc(userDocRef);
-
             if (userDoc.exists()) {
               setUserData(userDoc.data());
               console.log("User data fetched:", userDoc.data());
@@ -32,7 +74,9 @@ function Profile() {
             console.error("Error fetching user data:", error);
           }
         };
+
         fetchUserData();
+        logPageVisit(currentUser.uid, "Profile");
       } else {
         navigate("/login");
       }
@@ -40,12 +84,20 @@ function Profile() {
 
     return () => unsubscribe();
   }, [navigate]);
-
+  
   const handleLogout = () => {
     signOut(auth).then(() => {
       navigate("/login");
     });
   };
+
+  const handleEditCountdown = () => {
+    navigate("/edit-countdown");
+  };
+
+  const handleViewAllSubmissions = () => {
+    navigate("/viewAllSubmissions");
+  }
 
   const getFullName = () => {
     if (userData && userData.firstName && userData.lastName) {
@@ -58,6 +110,48 @@ function Profile() {
     return user?.email?.split("@")[0] || "User";
   };
 
+  const handleApprove = async (submissionId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/submissions/${submissionId}/approve`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error("Approval failed");
+      }
+  
+      // Remove approved item from the list locally
+      setSubmissions((prev) => prev.filter(sub => sub._id !== submissionId));
+    } catch (error) {
+      console.error("Error approving submission:", error);
+      alert("Failed to approve submission.");
+    }
+  };
+  
+  const handleDecline = async (submissionId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/submissions/${submissionId}/decline`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error("Decline failed");
+      }
+  
+      // Remove declined item from the list locally
+      setSubmissions((prev) => prev.filter(sub => sub._id !== submissionId));
+    } catch (error) {
+      console.error("Error declining submission:", error);
+      alert("Failed to decline submission.");
+    }
+  };
+
   return (
     <div className="container-fluid py-4">
       {user && (
@@ -65,8 +159,86 @@ function Profile() {
           <div className="row">
             <div className="col-md-5">
               <div className="content-container">
-                <h2 className="mb-4">Previous Submissions</h2>
-                <div className="item-box"></div>
+                {user.email === "admin@gmail.com" ? (
+                  <div>
+                    <h2 className="mb-4">Approve Submissions</h2>
+                    {submissions.length > 0 ? (
+                    <div className="submissions-scroll-container">
+                      <div className="submissions-list">
+                        {submissions.map((submission, index) => (
+                          <div className="view-submission-card " key={index}>
+                            {submission.image ? (
+                              <img
+                              className="view-card-image"
+                              src={`http://localhost:3001/image/${submission._id}`}
+                              alt={submission.title}
+                            />
+                            ) : null}
+                            <div className="card-content">
+                              <div className="category">{submission.category}</div>
+                              <div className="heading">{submission.title}</div>
+                              <div className="description">{submission.description}</div>
+                              <div className="author">
+                                By <span className="name">{submission.author}</span>{" "}
+                                {submission.date}
+                              </div>
+                              <div className="action-button-container">
+                                <button
+                                  className=""
+                                  onClick={() => handleApprove(submission._id)}
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  className=""
+                                  onClick={() => handleDecline(submission._id)}
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      </div>
+                    ) : (
+                      <p>No submissions to review!</p>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <h2 className="mb-4">Previous Submissions</h2>
+                    {}
+                    <div className="submissions-scroll-container">
+                    <div className="submissions-list">
+                      {submissions.length > 0 ? (
+                        submissions.map((submission, index) => (
+                          <div className="view-submission-card" key={index}>
+                            {submission.image && (
+                              <img
+                                className="view-card-image"
+                                src={`http://localhost:3001/image/${submission._id}`}
+                                alt={submission.title}
+                              />
+                            )}
+                            <div className="card-content">
+                              <div className="category">{submission.category}</div>
+                              <div className="heading">{submission.title}</div>
+                              <div className="description">{submission.description}</div>
+                              <div className="author">
+                                Status: <span className="name">{submission.status}</span> |{" "}
+                                {new Date(submission.entryDate).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p>You haven't submitted anything yet.</p>
+                      )}
+                    </div>                    
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -76,12 +248,12 @@ function Profile() {
                   <div className="profile-img-container">
                     {userData?.photo ? (
                       <img
-                        src="{userData.photo}"
-                        alt="Profile photo"
+                        src={userData.photo}
+                        alt="Profile"
                         className="img-fluid rounded-circle"
                       />
                     ) : (
-                      <img src={profileIcon} alt="Profile photo" />
+                      <img src={profileIcon} alt="Profile" />
                     )}
                   </div>
                   <div className="ms-4">
@@ -110,12 +282,32 @@ function Profile() {
                 </div>
               </div>
               <div className="content-container">
-                <h2 className="mb-4">Previous Votes</h2>
-                <div className="row">
-                  <div className="col-md-6 mb-3">
-                    <div className="item-box"></div>
-                  </div>
+                {user.email === "admin@gmail.com" ? (
+                  <div>
+                    <h2 className="mb-4">Admin Tools</h2>
+                    <div className="py-1">
+                    <div className="mb-2">
+                      <button className="btn btn-secondary w-100" onClick={handleEditCountdown}>
+                        Edit countdown
+                      </button>
+                    </div>
+                    <div>
+                      <button className="btn btn-secondary w-100" onClick={handleViewAllSubmissions}>
+                        View/Restore all submissions
+                      </button>
+                    </div>
                 </div>
+                  </div>
+                ) : (
+                  <div>
+                    <h2 className="mb-4">Previous Votes</h2>
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <div className="item-box"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
