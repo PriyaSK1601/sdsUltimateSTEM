@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Tournament.css";
 import CountdownTimer from "../components/CountdownTimer";
 import "bootstrap/dist/css/bootstrap.min.css";
+import axios from "axios";
 
-function Tournament({ submissions }) {
+function Tournament() {
   const [tournamentData, setTournamentData] = useState(null);
   const [currentRound, setCurrentRound] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [isActive, setIsActive] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [round1Winners, setRound1Winners] = useState(Array(8).fill(null));
   const [round2Winners, setRound2Winners] = useState(Array(4).fill(null));
   const [semiFinalWinners, setSemiFinalWinners] = useState(Array(2).fill(null));
   const [finalWinner, setFinalWinner] = useState(null);
-  const [countdownData, setCountdownData] = useState(null);
   // Track voted matches to disable the other option
   const [votedMatches, setVotedMatches] = useState({
     round1: Array(8).fill(null),
@@ -22,6 +22,69 @@ function Tournament({ submissions }) {
     round4: Array(1).fill(null),
   });
   const navigate = useNavigate();
+
+  const voteSection = useRef(null);
+
+  const scrollToSection = (elementRef) => {
+    window.scrollTo({
+      top: elementRef.current.offsetTop,
+      behaviour: "smooth",
+    });
+  };
+
+  const fetchTournamentData = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/tournament");
+      if (response.data && response.data.length > 0) {
+        setTournamentData(response.data);
+
+        // Find the round with the earliest upcoming endDate (that hasn't expired)
+        const now = new Date();
+        const activeRounds = response.data.filter(
+          (round) => new Date(round.endDate) > now
+        );
+
+        if (activeRounds.length > 0) {
+          // Sort by earliest endDate first
+          activeRounds.sort(
+            (a, b) => new Date(a.endDate) - new Date(b.endDate)
+          );
+          setCurrentRound({
+            round: activeRounds[0].round,
+            name: activeRounds[0].roundName,
+            targetDate: activeRounds[0].endDate,
+          });
+          setIsActive(true);
+        } else if (response.data.length > 0) {
+          // All rounds have expired, reset
+          setCurrentRound(null);
+          setIsActive(false);
+        }
+      } else {
+        setTournamentData([]);
+        setCurrentRound(null);
+        setIsActive(false);
+      }
+    } catch (error) {
+      console.error("Error fetching tournament data:", error);
+      setCurrentRound(null);
+      setIsActive(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTournamentData();
+
+    // Set up polling interval to check for updates
+    const intervalId = setInterval(fetchTournamentData, 5000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const handleRoundComplete = () => {
+    // Refresh tournament data when a round completes
+    fetchTournamentData();
+  };
 
   useEffect(() => {
     const fetchApprovedSubmissions = async () => {
@@ -39,46 +102,6 @@ function Tournament({ submissions }) {
 
     fetchApprovedSubmissions();
   }, []);
-
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === "tournamentData" || e.key === null) {
-        setRefreshKey((prevKey) => prevKey + 1);
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    const loadTournamentData = () => {
-      const savedTournament = localStorage.getItem("tournamentData");
-      if (savedTournament) {
-        const parsedData = JSON.parse(savedTournament);
-        setTournamentData(parsedData);
-
-        if (parsedData.isActive && parsedData.rounds.length > 0) {
-          const currentRoundIndex = parsedData.currentRound;
-          if (currentRoundIndex < parsedData.rounds.length) {
-            setCurrentRound(parsedData.rounds[currentRoundIndex]);
-          } else {
-            setCurrentRound(null);
-          }
-        } else {
-          setCurrentRound(null);
-        }
-      } else {
-        setTournamentData(null);
-        setCurrentRound(null);
-      }
-    };
-
-    loadTournamentData();
-    const intervalId = setInterval(loadTournamentData, 2000);
-
-    return () => {
-      clearInterval(intervalId);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [refreshKey]);
 
   useEffect(() => {
     const fetchApprovedSubmissions = async () => {
@@ -237,7 +260,6 @@ function Tournament({ submissions }) {
   };
 
   const handleSubmitIdea = () => navigate("/submission");
-  const handleVoteNow = () => navigate("/vote");
 
   return (
     <div className="tournament-container">
@@ -249,10 +271,14 @@ function Tournament({ submissions }) {
               <h3>Ends in:</h3>
               <CountdownTimer
                 targetDate={currentRound.targetDate}
-                isActive={tournamentData.isActive}
+                isActive={isActive}
+                onRoundComplete={handleRoundComplete}
               />
               <div className="d-flex justify-content-center mt-4">
-                <button className="btn btn-secondary" onClick={handleVoteNow}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => scrollToSection(voteSection)}
+                >
                   Vote Now!
                 </button>
               </div>
@@ -271,38 +297,6 @@ function Tournament({ submissions }) {
               </div>
             </>
           )}
-          {submissions.length === 0 ? (
-            <p className="py-4">No Submissions</p>
-          ) : (
-            <div className="submissions-list">
-              {submissions
-                .filter((sub) => sub.status === "approved")
-                .map((submission, index) => (
-                  <div className="submission-card" key={index}>
-                    {/* Fetch the image URL dynamically from your API */}
-                    <div
-                      className="card-image"
-                      style={{
-                        backgroundImage: `url(http://localhost:3001/image/${submission._id})`, // Correctly set the image URL
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }}
-                    ></div>
-                    <div className="card-content">
-                      <div className="category">{submission.category}</div>
-                      <div className="heading">{submission.title}</div>
-                      <div className="description">
-                        {submission.description}
-                      </div>
-                      <div className="author">
-                        By <span className="name">{submission.author}</span>{" "}
-                        {submission.date}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
         </div>
       </div>
       <div className="header">
@@ -316,7 +310,7 @@ function Tournament({ submissions }) {
           <p>No submissions available yet.</p>
         ) : (
           <div className="bracket">
-            <div className="bracket-round">
+            <div ref={voteSection} className="bracket-round">
               <div className="round-label">Round 1</div>
               {getRoundMatches(paddedSubmissions, 1)}
             </div>

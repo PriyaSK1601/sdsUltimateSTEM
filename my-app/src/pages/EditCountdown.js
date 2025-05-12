@@ -1,81 +1,144 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import CountdownTimer from "../components/CountdownTimer";
+import axios from "axios";
 
 function EditCountdown() {
-  const initialiseFromStorage = () => {
-    const savedData = localStorage.getItem("tournamentData");
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      return {
-        numRounds: parsedData.rounds.length,
-        rounds: parsedData.rounds,
-        isEditing: true,
-        tournamentActive: parsedData.isActive,
-      };
+  const [numRounds, setNumRounds] = useState(1);
+  const [rounds, setRounds] = useState([
+    { index: 0, name: "Round 1", targetDate: "" },
+  ]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [tournamentActive, setTournamentActive] = useState(false);
+  const [currentRoundData, setCurrentRoundData] = useState(null);
+  const prevDataRef = useRef(null);
+
+  const resetTournament = async () => {
+    try {
+      await axios.delete("http://localhost:3001/tournament");
+
+      prevDataRef.current = null;
+      setNumRounds(1);
+      setRounds([{ index: 0, name: "Round 1", targetDate: "" }]);
+      setIsEditing(false);
+      setTournamentActive(false);
+      setCurrentRoundData(null);
+
+      console.log("Tournament successfully reset!");
+    } catch (error) {
+      console.error("Error resetting tournament:", error);
     }
-    return {
-      numRounds: 1,
-      rounds: [{ name: "Round 1", targetDate: "", index: 0 }],
-      isEditing: false,
-      tournamentActive: false,
-    };
   };
 
-  const initialState = initialiseFromStorage();
-  const [numRounds, setNumRounds] = useState(initialState.numRounds);
-  const [rounds, setRounds] = useState(initialState.rounds);
-  const [isEditing, setIsEditing] = useState(initialState.isEditing);
-  const [tournamentActive, setTournamentActive] = useState(
-    initialState.tournamentActive
-  );
+  const fetchTournamentData = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/tournament");
 
-  const [refreshKey, setRefreshKey] = useState(0);
+      if (response.data && response.data.length > 0) {
+        // Check if data has actually changed
+        const dataString = JSON.stringify(response.data);
+        if (dataString === prevDataRef.current) {
+          // Data hasn't changed, no need to update state
+          return;
+        }
 
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === "tournamentData" || e.key === null) {
-        setRefreshKey((prevKey) => prevKey + 1);
-      }
-    };
-    const intervalID = setInterval(() => {
-      const freshData = localStorage.getItem("tournamentData");
-      if (freshData) {
-        const parsedFreshData = JSON.parse(freshData);
-        setRounds(parsedFreshData.rounds);
-        setNumRounds(parsedFreshData.rounds.length);
+        // Store the new data string for future comparison
+        prevDataRef.current = dataString;
+
+        // Format rounds for the component state
+        const fetchedRounds = response.data.map((round) => ({
+          index: round.round,
+          name: round.roundName,
+          targetDate: new Date(round.endDate).toISOString().slice(0, 16),
+        }));
+
+        setRounds(fetchedRounds);
+        setNumRounds(fetchedRounds.length);
         setIsEditing(true);
-        setTournamentActive(parsedFreshData.isActive);
-        setRefreshKey((prevKey) => prevKey + 1); // Trigger re-render
-      } else if (isEditing) {
+
+        // Find current active round
+        const now = new Date();
+        const activeRounds = response.data.filter(
+          (round) => new Date(round.endDate) > now
+        );
+
+        if (activeRounds.length > 0) {
+          // Sort by earliest endDate first
+          activeRounds.sort(
+            (a, b) => new Date(a.endDate) - new Date(b.endDate)
+          );
+          const currentRound = activeRounds[0];
+
+          setCurrentRoundData({
+            currentRound: currentRound.round,
+            name: currentRound.roundName,
+            targetDate: currentRound.endDate,
+            totalRounds: response.data.length,
+            isActive: true,
+          });
+
+          setTournamentActive(true);
+        } else if (response.data.length > 0) {
+          // All rounds have expired, reset
+          await resetTournament();
+        } else {
+          setCurrentRoundData(null);
+          setTournamentActive(false);
+        }
+      } else {
+        // No tournament data
+        // Only update state if there was data previously
+        if (prevDataRef.current !== null) {
+          prevDataRef.current = null;
+          if (!isEditing) {
+            setNumRounds(1);
+            setRounds([{ index: 0, name: "Round 1", targetDate: "" }]);
+          }
+          setIsEditing(false);
+          setTournamentActive(false);
+          setCurrentRoundData(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching tournament data:", error);
+      if (!isEditing && prevDataRef.current !== null) {
+        prevDataRef.current = null;
         setNumRounds(1);
-        setRounds([{ name: "Round 1", targetDate: "", index: 0 }]);
+        setRounds([{ index: 0, name: "Round 1", targetDate: "" }]);
         setIsEditing(false);
         setTournamentActive(false);
+        setCurrentRoundData(null);
       }
-    }, 2000); // match Tournament page interval
+    }
+  };
 
-    window.addEventListener("storage", handleStorageChange);
+  useEffect(() => {
+    // Initial fetch
+    fetchTournamentData();
 
-    return () => {
-      clearInterval(intervalID);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [refreshKey]);
+    //Polling interval to check for updates
+    const intervalId = setInterval(() => {
+      if (!isEditing) {
+        fetchTournamentData();
+      }
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [isEditing]);
 
   // Update rounds when numRounds changes
   useEffect(() => {
     if (!isEditing) {
+      // Only update if admin is editing
       const updatedRounds = [];
 
-      // Keep existing rounds data if available
       for (let i = 0; i < numRounds; i++) {
         if (i < rounds.length) {
           updatedRounds.push(rounds[i]);
         } else {
           updatedRounds.push({
+            index: i,
             name: `Round ${i + 1}`,
             targetDate: "",
-            index: i,
           });
         }
       }
@@ -85,6 +148,7 @@ function EditCountdown() {
   }, [numRounds]);
 
   const handleNumRoundsChange = (e) => {
+    e.preventDefault(); // Prevent form submission
     const value = parseInt(e.target.value);
     if (value > 0 && value <= 10) {
       setNumRounds(value);
@@ -131,41 +195,56 @@ function EditCountdown() {
     return true;
   };
 
-  const handleStartTournament = () => {
+  const handleStartTournament = async (e) => {
+    e.preventDefault(); // Prevent form submission
     if (!validateDates()) return;
 
-    // Convert dates to ISO strings
-    const updatedRounds = rounds.map((round) => ({
-      ...round,
-      targetDate: new Date(round.targetDate).toISOString(),
-    }));
+    try {
+      // Convert dates to ISO strings
+      const formattedRounds = rounds.map((round) => ({
+        ...round,
+        targetDate: new Date(round.targetDate).toISOString(),
+      }));
 
-    // Create tournament data object
-    const tournamentData = {
-      rounds: updatedRounds,
-      currentRound: 0,
-      isActive: true,
-      startTime: new Date().toISOString(),
-    };
+      // Send tournament data
+      await axios.post("http://localhost:3001/tournament", {
+        rounds: formattedRounds,
+      });
 
-    // Save to localStorage
-    localStorage.setItem("tournamentData", JSON.stringify(tournamentData));
+      // Update local state
+      setIsEditing(true);
+      setTournamentActive(true);
 
-    // Update state
-    setRounds(updatedRounds);
-    setIsEditing(true);
-    setTournamentActive(true);
+      // Clear previous data reference to force refresh
+      prevDataRef.current = null;
+
+      // Refresh tournament data from server
+      fetchTournamentData();
+
+      alert("Tournament started successfully!");
+    } catch (error) {
+      console.error("Error starting tournament:", error);
+      alert("Failed to start tournament. Please try again.");
+    }
   };
 
-  const handleResetTournament = () => {
-    // Remove from localStorage
-    localStorage.removeItem("tournamentData");
+  const handleResetTournament = async (e) => {
+    e.preventDefault(); // Prevent form submission
+    try {
+      await resetTournament();
 
-    // Reset state
-    setNumRounds(1);
-    setRounds([{ name: "Round 1", targetDate: "", index: 0 }]);
-    setIsEditing(false);
-    setTournamentActive(false);
+      alert("Tournament reset successfully!");
+    } catch (error) {
+      console.error("Error resetting tournament:", error);
+      alert("Failed to reset tournament. Please try again.");
+    }
+  };
+
+  const handleRoundComplete = () => {
+    // Clear previous data reference to force refresh
+    prevDataRef.current = null;
+    // Refresh tournament data when a round completes
+    fetchTournamentData();
   };
 
   const formatDateTime = (isoString) => {
@@ -173,27 +252,6 @@ function EditCountdown() {
     const date = new Date(isoString);
     return date.toLocaleString();
   };
-
-  const getCurrentRoundData = () => {
-    const savedTournament = localStorage.getItem("tournamentData");
-    if (savedTournament) {
-      const tournamentData = JSON.parse(savedTournament);
-      const currentRoundIndex = tournamentData.currentRound;
-
-      if (currentRoundIndex < tournamentData.rounds.length) {
-        return {
-          name: tournamentData.rounds[currentRoundIndex].name,
-          targetDate: tournamentData.rounds[currentRoundIndex].targetDate,
-          currentRound: currentRoundIndex,
-          totalRounds: tournamentData.rounds.length,
-          isActive: tournamentData.isActive,
-        };
-      }
-    }
-    return null;
-  };
-
-  const currentRoundData = getCurrentRoundData();
 
   return (
     <div className="container my-5">
@@ -216,6 +274,7 @@ function EditCountdown() {
                     key={`countdown-${currentRoundData.targetDate}`}
                     targetDate={currentRoundData.targetDate}
                     isActive={tournamentActive}
+                    onRoundComplete={handleRoundComplete}
                   />
 
                   <div className="text-center mt-3 fw-500">

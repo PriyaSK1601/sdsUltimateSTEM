@@ -140,4 +140,88 @@ router.patch("/submissions/:id/vote", async (req, res) => {
   }
 });
 
+// Get tournament data
+router.get("/tournament", async (req, res) => {
+  try {
+    // Get all tournaments and sort by round number
+    const tournaments = await schemas.Tournament.find().sort({ round: 1 });
+    res.json(tournaments);
+  } catch (error) {
+    console.error("Error fetching tournament data:", error);
+    res.status(500).json({ message: "Error fetching tournament data" });
+  }
+});
+
+// Create or update tournament rounds
+router.post("/tournament", async (req, res) => {
+  try {
+    const { rounds } = req.body;
+
+    // First clear existing tournament data
+    await schemas.Tournament.deleteMany({});
+
+    // Insert all new rounds
+    const createdRounds = await schemas.Tournament.insertMany(
+      rounds.map((round, index) => ({
+        round: index,
+        roundName: round.name,
+        endDate: new Date(round.targetDate),
+      }))
+    );
+
+    res.status(201).json({
+      message: "Tournament created successfully",
+      tournament: createdRounds,
+    });
+  } catch (error) {
+    console.error("Error creating tournament:", error);
+    res.status(500).json({ message: "Error creating tournament" });
+  }
+});
+
+// Advance to next round
+router.patch("/tournament/advance", async (req, res) => {
+  try {
+    // Find total number of rounds
+    const totalRounds = await schemas.Tournament.countDocuments();
+
+    if (totalRounds > 0) {
+      // Get last round
+      const lastRound = await schemas.Tournament.find()
+        .sort({ round: -1 })
+        .limit(1);
+      const currentRound = lastRound[0].round;
+
+      // If there are more rounds to advance to
+      if (currentRound < totalRounds - 1) {
+        res.status(200).json({
+          message: "Advanced to next round",
+          currentRound: currentRound + 1,
+        });
+      } else {
+        res.status(200).json({
+          message: "Tournament completed - this is the final round",
+          currentRound: currentRound,
+        });
+      }
+    } else {
+      res.status(404).json({ message: "No tournament found" });
+    }
+  } catch (error) {
+    console.error("Error advancing tournament round:", error);
+    res.status(500).json({ message: "Error advancing tournament round" });
+  }
+});
+
+// Delete tournament (reset)
+router.delete("/tournament", async (req, res) => {
+  try {
+    await schemas.Tournament.deleteMany({});
+    res.status(200).json({ message: "Tournament reset successfully" });
+  } catch (error) {
+    console.error("Error resetting tournament:", error);
+    res.status(500).json({ message: "Error resetting tournament" });
+  }
+});
+
 module.exports = router;

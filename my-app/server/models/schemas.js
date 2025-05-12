@@ -31,6 +31,7 @@ const Submission = mongoose.model(
 // Tournament Schema
 const tournamentSchema = new Schema({
   round: { type: Number, required: true },
+  roundName: { type: String, required: true },
   endDate: { type: Date, required: true },
   submissionID: { type: Schema.Types.ObjectId, ref: "Submission" },
   submissionVotes: { type: Number, default: 0 },
