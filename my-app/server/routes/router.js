@@ -124,19 +124,40 @@ router.patch("/submissions/:submissionId/restore", async (req, res) => {
 });
 
 // ✅ Vote endpoint (this is the new one!)
-router.patch("/submissions/:id/vote", async (req, res) => {
+router.post("/submissions/:id/vote", async (req, res) => {
+  const { firebaseUID, round } = req.body;
+  const submissionId = req.params.id;
+
+  if (!firebaseUID || round === undefined) {
+    return res.status(400).json({ message: "Missing firebaseUID or round" });
+  }
+
   try {
-    const submission = await schemas.Submission.findByIdAndUpdate(
-      req.params.id,
+    // ✅ Check if user already voted in this round
+    const existingVote = await schemas.Vote.findOne({ firebaseUID, round });
+
+    if (existingVote) {
+      return res.status(400).json({ message: "You already voted this round" });
+    }
+
+    // ✅ Save the vote
+    const vote = new schemas.Vote({ firebaseUID, submissionId, round });
+    await vote.save();
+
+    // ✅ Increment vote count for submission
+    const updatedSubmission = await schemas.Submission.findByIdAndUpdate(
+      submissionId,
       { $inc: { votes: 1 } },
       { new: true }
     );
-    if (!submission)
-      return res.status(404).json({ message: "Submission not found" });
-    res.status(200).json({ message: "Vote recorded", submission });
+
+    res.status(200).json({
+      message: "Vote recorded",
+      submission: updatedSubmission,
+    });
   } catch (error) {
-    console.error("Error voting on submission:", error);
-    res.status(500).json({ message: "Error voting on submission" });
+    console.error("Error recording vote:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

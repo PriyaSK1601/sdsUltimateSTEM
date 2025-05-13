@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-//The data that is saved in the databases on MONGO:
-
-//Submission Schema
+// Submission Schema
 const submissionSchema = new Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
@@ -22,11 +20,7 @@ const submissionSchema = new Schema({
   votes: { type: Number, default: 0 },
 });
 
-const Submission = mongoose.model(
-  "Submission",
-  submissionSchema,
-  "submission-data"
-);
+const Submission = mongoose.model("Submission", submissionSchema, "submission-data");
 
 // Tournament Schema
 const tournamentSchema = new Schema({
@@ -37,10 +31,21 @@ const tournamentSchema = new Schema({
   submissionVotes: { type: Number, default: 0 },
 });
 
-const Tournament = mongoose.model(
-  "Tournament",
-  tournamentSchema,
-  "tournament-data"
-);
+const Tournament = mongoose.model("Tournament", tournamentSchema, "tournament-data");
 
-module.exports = { Submission, Tournament };
+// ✅ Vote Schema
+const voteSchema = new Schema({
+  firebaseUID: { type: String, required: true },
+  submissionId: { type: Schema.Types.ObjectId, ref: "Submission", required: true },
+  round: { type: Number, required: true },
+  timestamp: { type: Date, default: Date.now },
+});
+
+const Vote = mongoose.model("Vote", voteSchema, "vote-data");
+
+// ✅ Export all
+module.exports = {
+  Submission,
+  Tournament,
+  Vote,
+};

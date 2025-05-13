@@ -4,6 +4,8 @@ import "../styles/Tournament.css";
 import CountdownTimer from "../components/CountdownTimer";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
+import { auth } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 function Tournament() {
   const [tournamentData, setTournamentData] = useState(null);
@@ -14,21 +16,28 @@ function Tournament() {
   const [round2Winners, setRound2Winners] = useState(Array(4).fill(null));
   const [semiFinalWinners, setSemiFinalWinners] = useState(Array(2).fill(null));
   const [finalWinner, setFinalWinner] = useState(null);
-  // Track voted matches to disable the other option
   const [votedMatches, setVotedMatches] = useState({
     round1: Array(8).fill(null),
     round2: Array(4).fill(null),
     round3: Array(2).fill(null),
     round4: Array(1).fill(null),
   });
+  const [firebaseUID, setFirebaseUID] = useState(null);
+  const voteSection = useRef(null);
   const navigate = useNavigate();
 
-  const voteSection = useRef(null);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) setFirebaseUID(user.uid);
+      else setFirebaseUID(null);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const scrollToSection = (elementRef) => {
     window.scrollTo({
       top: elementRef.current.offsetTop,
-      behaviour: "smooth",
+      behavior: "smooth",
     });
   };
 
@@ -37,15 +46,12 @@ function Tournament() {
       const response = await axios.get("http://localhost:3001/tournament");
       if (response.data && response.data.length > 0) {
         setTournamentData(response.data);
-
-        // Find the round with the earliest upcoming endDate (that hasn't expired)
         const now = new Date();
         const activeRounds = response.data.filter(
           (round) => new Date(round.endDate) > now
         );
 
         if (activeRounds.length > 0) {
-          // Sort by earliest endDate first
           activeRounds.sort(
             (a, b) => new Date(a.endDate) - new Date(b.endDate)
           );
@@ -55,8 +61,7 @@ function Tournament() {
             targetDate: activeRounds[0].endDate,
           });
           setIsActive(true);
-        } else if (response.data.length > 0) {
-          // All rounds have expired, reset
+        } else {
           setCurrentRound(null);
           setIsActive(false);
         }
@@ -74,15 +79,11 @@ function Tournament() {
 
   useEffect(() => {
     fetchTournamentData();
-
-    // Set up polling interval to check for updates
     const intervalId = setInterval(fetchTournamentData, 5000);
-
     return () => clearInterval(intervalId);
   }, []);
 
   const handleRoundComplete = () => {
-    // Refresh tournament data when a round completes
     fetchTournamentData();
   };
 
@@ -94,26 +95,8 @@ function Tournament() {
         const approved = data.filter(
           (submission) => submission.status === "approved"
         );
-        setSubmissions(approved);
-      } catch (error) {
-        console.error("Error fetching submissions:", error);
-      }
-    };
-
-    fetchApprovedSubmissions();
-  }, []);
-
-  useEffect(() => {
-    const fetchApprovedSubmissions = async () => {
-      try {
-        const response = await fetch("http://localhost:3001/submissions");
-        const data = await response.json();
-        const approved = data.filter(
-          (submission) => submission.status === "approved"
-        );
         setSubmissions(approved.slice(0, 16));
 
-        // Attempt to load voted matches from localStorage
         const savedVotes = localStorage.getItem("tournamentVotes");
         if (savedVotes) {
           setVotedMatches(JSON.parse(savedVotes));
@@ -132,50 +115,45 @@ function Tournament() {
   const isRound1Ready = paddedSubmissions.every((s) => s !== null);
 
   const handleClick = async (round, matchIndex, contenderIndex, submission) => {
-    if (!submission) return;
+    if (!submission || !firebaseUID) return;
 
     try {
       const response = await fetch(
         `http://localhost:3001/submissions/${submission._id}/vote`,
         {
-          method: "PATCH",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            firebaseUID,
+            round,
+          }),
         }
       );
 
-      if (response.ok) {
-        const updatedSubmission = await response.json();
+      const result = await response.json();
 
-        // Update local state with new votes
+      if (response.ok) {
+        const updatedSubmission = result.submission;
         const updatedSubmissions = submissions.map((s) =>
-          s._id === updatedSubmission.submission._id
-            ? updatedSubmission.submission
-            : s
+          s._id === updatedSubmission._id ? updatedSubmission : s
         );
         setSubmissions(updatedSubmissions);
 
-        // Update the voted matches tracking
         const roundKey = `round${round}`;
         const newVotedMatches = { ...votedMatches };
-
-        // Store which contender was selected (0 or 1)
         newVotedMatches[roundKey][matchIndex] = contenderIndex;
-
         setVotedMatches(newVotedMatches);
-
-        // Save to localStorage
-        localStorage.setItem(
-          "tournamentVotes",
-          JSON.stringify(newVotedMatches)
-        );
+        localStorage.setItem("tournamentVotes", JSON.stringify(newVotedMatches));
 
         alert(`✅ Your vote for "${submission.title}" has been recorded!`);
       } else {
-        console.error("Vote failed:", await response.text());
-        alert("⚠️ Vote failed. Please try again.");
+        alert(`⚠️ ${result.message || "Vote failed"}`);
       }
     } catch (error) {
       console.error("Error voting:", error);
-      alert("⚠️ Error voting. Please check your connection.");
+      alert("⚠️ Error voting. Please try again.");
     }
   };
 
@@ -198,11 +176,9 @@ function Tournament() {
     const winner = roundWinners[matchIndex];
     const isSelected = winner && winner._id === submission._id;
 
-    // Check if this match has been voted on
     const roundKey = `round${round}`;
     const votedContenderIndex = votedMatches[roundKey][matchIndex];
 
-    // This contender is disabled if another contender in this match was voted for
     const isDisabled =
       votedContenderIndex !== null && votedContenderIndex !== contenderIndex;
 
