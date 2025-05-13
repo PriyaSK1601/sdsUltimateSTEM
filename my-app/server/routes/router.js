@@ -203,36 +203,49 @@ router.post("/tournament", async (req, res) => {
 // Advance to next round
 router.patch("/tournament/advance", async (req, res) => {
   try {
-    // Find total number of rounds
-    const totalRounds = await schemas.Tournament.countDocuments();
+    const round = 1; // ✅ Hardcoded for now – only advancing Round 1 to Round 2
 
-    if (totalRounds > 0) {
-      // Get last round
-      const lastRound = await schemas.Tournament.find()
-        .sort({ round: -1 })
-        .limit(1);
-      const currentRound = lastRound[0].round;
+    // Get all approved submissions and ensure 16 total
+    const submissions = await schemas.Submission.find({ status: "approved" }).sort({ entryDate: 1 });
+    const paddedSubmissions = [...submissions];
 
-      // If there are more rounds to advance to
-      if (currentRound < totalRounds - 1) {
-        res.status(200).json({
-          message: "Advanced to next round",
-          currentRound: currentRound + 1,
-        });
-      } else {
-        res.status(200).json({
-          message: "Tournament completed - this is the final round",
-          currentRound: currentRound,
-        });
-      }
-    } else {
-      res.status(404).json({ message: "No tournament found" });
+    while (paddedSubmissions.length < 16) {
+      paddedSubmissions.push(null); // fallback if fewer than 16
     }
+
+    const round1Winners = [];
+
+    for (let i = 0; i < 8; i++) {
+      const s1 = paddedSubmissions[i * 2];
+      const s2 = paddedSubmissions[i * 2 + 1];
+
+      if (s1 && !s2) {
+        round1Winners.push(s1._id); // s1 wins by default
+      } else if (!s1 && s2) {
+        round1Winners.push(s2._id); // s2 wins by default
+      } else if (s1 && s2) {
+        round1Winners.push(s1.votes >= s2.votes ? s1._id : s2._id); // ✅ vote comparison
+      }
+    }
+
+    // Save or overwrite round 1 winners in RoundWinners
+    await schemas.RoundWinners.findOneAndUpdate(
+      { round: 1 },
+      { winners: round1Winners },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({
+      message: "Round 1 winners determined",
+      round: 1,
+      winners: round1Winners,
+    });
   } catch (error) {
     console.error("Error advancing tournament round:", error);
     res.status(500).json({ message: "Error advancing tournament round" });
   }
 });
+
 
 // Delete tournament (reset)
 router.delete("/tournament", async (req, res) => {

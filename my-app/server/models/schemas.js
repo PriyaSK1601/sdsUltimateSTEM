@@ -33,7 +33,7 @@ const tournamentSchema = new Schema({
 
 const Tournament = mongoose.model("Tournament", tournamentSchema, "tournament-data");
 
-// ✅ Vote Schema
+// Vote Schema
 const voteSchema = new Schema({
   firebaseUID: { type: String, required: true },
   submissionId: { type: Schema.Types.ObjectId, ref: "Submission", required: true },
@@ -43,9 +43,18 @@ const voteSchema = new Schema({
 
 const Vote = mongoose.model("Vote", voteSchema, "vote-data");
 
-// ✅ Export all
+// Round Winners Schema
+const roundWinnersSchema = new Schema({
+  round: { type: Number, required: true },
+  winners: [{ type: Schema.Types.ObjectId, ref: "Submission" }],
+});
+
+const RoundWinners = mongoose.model("RoundWinners", roundWinnersSchema, "round-winners");
+
+// Export all models
 module.exports = {
   Submission,
   Tournament,
   Vote,
+  RoundWinners,
 };
