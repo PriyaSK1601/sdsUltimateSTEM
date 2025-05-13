@@ -241,22 +241,31 @@ function Tournament() {
         </div>
       </div>
       
-      {showModal && selectedSubmission && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">{selectedSubmission.title}</h5>
-              <button onClick={closeModal} className="close-button">X</button>
-            </div>
-            <div className="modal-body">
-              <p>{selectedSubmission.description}</p>
-              <p><strong>Vote count: </strong>{selectedSubmission.votes}</p>
-            </div>
+    {showModal && selectedSubmission && (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">{selectedSubmission.submission.title}</h5>
+            <button onClick={closeModal} className="close-button">X</button>
+          </div>
+          <div className="modal-body">
+            <p><strong>Description: </strong>{selectedSubmission.submission.description}</p>
+            
+            {/* Displaying the image */}
+            {selectedSubmission.submission.image && (
+              <img
+                src={selectedSubmission.submission.image}
+                alt={selectedSubmission.submission.title}
+                className="submission-image"
+              />
+            )}
+
+            <p><strong>Vote count: </strong>{selectedSubmission.submission.votes}</p>
           </div>
         </div>
-      )}
-
-      <div className="header">
+      </div>
+    )}
+    <div className="header">
         {!isRound1Ready && (
           <p className="warning">
             ⚠️ Please ensure all 16 submissions are approved before starting the

@@ -74,19 +74,26 @@
 .contender {
   cursor: pointer;
   padding: 10px;
-  text-align: center;
+  text-align: left;
   border: 1px solid #ccc;
   margin: 5px;
   border-radius: 5px;
-  width: 150px; /* Set to your preferred size */
-  height: 80px; /* Same as width for equal dimensions */
+  width: 150px; 
+  height: 80px; 
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; 
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap; /* Ensures text stays on one line */
+}
+
+.contender .title {
+  font-weight: bold;
+  font-size: 12px;
+  text-align: left; 
+  white-space: nowrap; 
+  text-overflow: ellipsis; /* sdd ellipsis when text exceeds the container  */
+  width: 100%; 
 }
 
 .contender:hover {
@@ -103,6 +110,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  text-overflow: ellipsis;
 }
 
 .contender.disabled {
@@ -140,11 +148,6 @@
 .card-content::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 4px;
-}
-
-.contender .title {
-  font-weight: bold;
-  font-size: 12px;
 }
 
 .bracket-category {
@@ -223,11 +226,12 @@
 }
 
 .modal-content {
-  background-color: white;
+  background: white;
   padding: 20px;
-  border-radius: 10px;
+  border-radius: 8px;
   width: 400px;
-  max-width: 90%;
+  max-width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .modal-header {
