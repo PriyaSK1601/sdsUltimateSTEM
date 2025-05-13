@@ -14,12 +14,29 @@ function Tournament() {
   const [tournamentData, setTournamentData] = useState(null);
   const [currentRound, setCurrentRound] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  // Track voted matches to disable the other option
+
+  // State for modal
+  const [showModal, setShowModal] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
+
+  const openModal = (submission, matchIndex, contenderIndex, round) => {
+    console.log("Opening modal with:", submission, matchIndex, contenderIndex, round);
+    setSelectedSubmission({submission, matchIndex, contenderIndex, round});
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    console.log("Closing modal");
+    setSelectedSubmission(null);
+    setShowModal(false);
+  };
+
+
   const [votedMatches, setVotedMatches] = useState({
     round1: Array(8).fill(null),
     round2: Array(4).fill(null),
     round3: Array(2).fill(null),
-    round4: Array(1).fill(null)
+    round4: Array(1).fill(null),
   });
   const navigate = useNavigate();
 
@@ -70,8 +87,7 @@ function Tournament() {
         const data = await response.json();
         const approved = data.filter((submission) => submission.status === "approved");
         setSubmissions(approved.slice(0, 16));
-        
-        // Attempt to load voted matches from localStorage
+
         const savedVotes = localStorage.getItem("tournamentVotes");
         if (savedVotes) {
           setVotedMatches(JSON.parse(savedVotes));
@@ -92,6 +108,13 @@ function Tournament() {
   const handleClick = async (round, matchIndex, contenderIndex, submission) => {
     if (!submission) return;
 
+    const roundKey = `round${round}`;
+    const votedContenderIndex = votedMatches[roundKey][matchIndex];
+
+    // Already voted
+    if (votedContenderIndex !== null) {
+      return;
+    }
     try {
       const response = await fetch(`http://localhost:3001/submissions/${submission._id}/vote`, {
         method: "PATCH",
@@ -131,11 +154,7 @@ function Tournament() {
 
   const getContender = (submission, round, matchIndex, contenderIndex) => {
     if (!submission) {
-      return (
-        <div className="contender empty">
-          Waiting...
-        </div>
-      );
+      return <div className="contender empty">Waiting...</div>;
     }
 
     const roundWinners =
@@ -150,28 +169,18 @@ function Tournament() {
     // Check if this match has been voted on
     const roundKey = `round${round}`;
     const votedContenderIndex = votedMatches[roundKey][matchIndex];
-    
-    // This contender is disabled if another contender in this match was voted for
-    const isDisabled = votedContenderIndex !== null && votedContenderIndex !== contenderIndex;
+    const isDisabled = votedContenderIndex !== null;
 
     return (
-      <div className={`contender ${isDisabled ? "disabled" : ""}`}>
-        {submission.image && (
-          <img
-            className="bracket-image"
-            src={`http://localhost:3001/image/${submission._id}`}
-            alt={submission.title}
-          />
-        )}
-        <div className="card-content">
-          <div className="bracket-title">{submission.title}</div>
-          <div className="bracket-category">{submission.category}</div>
-          <div className="bracket-description">{submission.description}</div>
-          <div className="bracket-author">
-            By <span className="name">{submission.author}</span> {submission.date}
-          </div>
-          <div className="bracket-votes">Votes: {submission.votes}</div>
-          <button
+      <div className="contender">
+       <div
+          className="title"
+          onClick={() => openModal(submission, matchIndex, contenderIndex, round)}
+        >
+          {submission.title}
+        </div>
+
+        <button
             className={`btn btn-sm mt-2 ${
               votedContenderIndex === contenderIndex ? "btn-success" : "btn-outline-success"
             }`}
@@ -180,7 +189,7 @@ function Tournament() {
           >
             {votedContenderIndex === contenderIndex ? "✓ Voted" : "👍 Vote"}
           </button>
-        </div>
+        <div className="votes">Votes count: {submission.votes}</div>
       </div>
     );
   };
@@ -217,11 +226,6 @@ function Tournament() {
                 targetDate={currentRound.targetDate}
                 isActive={tournamentData.isActive}
               />
-              <div className="d-flex justify-content-center mt-4">
-                <button className="btn btn-secondary" onClick={handleVoteNow}>
-                  Vote Now!
-                </button>
-              </div>
             </>
           ) : (
             <>
@@ -236,6 +240,22 @@ function Tournament() {
           )}
         </div>
       </div>
+      
+      {showModal && selectedSubmission && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">{selectedSubmission.title}</h5>
+              <button onClick={closeModal} className="close-button">X</button>
+            </div>
+            <div className="modal-body">
+              <p>{selectedSubmission.description}</p>
+              <p><strong>Vote count: </strong>{selectedSubmission.votes}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="header">
         {!isRound1Ready && (
           <p className="warning">
@@ -264,13 +284,9 @@ function Tournament() {
               {getRoundMatches(semiFinalWinners, 4)}
             </div>
             <div className="bracket-round">
-              <div className="round-label">Champion</div>
-              <div className="winner">
-                {finalWinner ? (
-                  <>🏆 {finalWinner.title}</>
-                ) : (
-                  <div className="contender empty">Waiting...</div>
-                )}
+              <div className="round-label">Winner</div>
+              <div className="final-winner">
+                {finalWinner ? finalWinner.title : "No winner yet."}
               </div>
             </div>
           </div>
