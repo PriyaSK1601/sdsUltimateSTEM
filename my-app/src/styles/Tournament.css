@@ -21,23 +21,19 @@
   align-items: center;
   gap: 80px;
   min-width: 800px; /* ensure horizontal scroll on small screens */
-  padding: 50px 20px;
 }
 
 .bracket-round {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 30px;
   min-width: 180px;
   position: relative;
-  padding: 3px;
-  margin-bottom: 10px;
+  min-width: 180px;
 }
 
 .round-label {
   font-weight: bold;
-  margin-bottom: 20px;
   font-size: 1.1rem;
   color: #555;
   text-align: center;
@@ -68,6 +64,7 @@
   position: relative;
   width: 100%;
   font-size: 0.85rem; /* Smaller font */
+  gap: 4px;
 }
 
 /* Standard-sized submission card styling */
@@ -259,7 +256,6 @@ button.btn {
   width: 80%;
 }
 
-
 /* Add connecting lines */
 .match::after {
   content: '';
@@ -289,11 +285,17 @@ button.btn {
 .bracket-round:not(:first-child) .match::before {
   content: '';
   position: absolute;
-  height: calc(100% + 15px);
+  height: calc(100% + 200px);
   width: 2px;
   background-color: #ccc;
   left: -50px;
-  top: -7.5px;
+  top: 0;
+  bottom: 0px;
+}
+
+/* Adjustments for the last round to avoid an extra line */
+.bracket-round:last-child .match::before {
+  display: none; /* Remove the line for the last round */
 }
 
 .winner {
