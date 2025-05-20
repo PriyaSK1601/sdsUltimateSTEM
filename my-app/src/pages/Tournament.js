@@ -172,11 +172,10 @@ function Tournament() {
     const isDisabled = votedContenderIndex !== null;
 
     return (
-      <div className="contender">
-       <div
-          className="title"
-          onClick={() => openModal(submission, matchIndex, contenderIndex, round)}
-        >
+      <div className="contender"
+      onClick={() => openModal(submission, matchIndex, contenderIndex, round)}
+      >
+       <div className="title">
           {submission.title}
         </div>
 
@@ -249,18 +248,20 @@ function Tournament() {
             <button onClick={closeModal} className="close-button">X</button>
           </div>
           <div className="modal-body">
+            <p className="bracket-author">
+              By {selectedSubmission.submission.author}
+            </p>
+            
             <p><strong>Description: </strong>{selectedSubmission.submission.description}</p>
             
-            {/* Displaying the image */}
             {selectedSubmission.submission.image && (
               <img
-                src={selectedSubmission.submission.image}
-                alt={selectedSubmission.submission.title}
                 className="submission-image"
+                src={`http://localhost:3001/image/${selectedSubmission.submission._id}`}
+                alt={selectedSubmission.submission.title}
               />
             )}
-
-            <p><strong>Vote count: </strong>{selectedSubmission.submission.votes}</p>
+         <p><strong>Vote count: </strong>{selectedSubmission.submission.votes}</p>
           </div>
         </div>
       </div>
