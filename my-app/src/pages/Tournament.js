@@ -154,7 +154,7 @@ function Tournament() {
 
   const getContender = (submission, round, matchIndex, contenderIndex) => {
     if (!submission) {
-      return <div className="contender empty">Waiting...</div>;
+      return <div className="contender empty">TBD</div>;
     }
 
     const roundWinners =
