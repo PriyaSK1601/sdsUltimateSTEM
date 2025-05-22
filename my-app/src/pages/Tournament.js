@@ -180,15 +180,15 @@ function Tournament() {
         </div>
 
         <button
-            className={`btn btn-sm mt-2 ${
+            className={`vote-btn btn-sm mt-2 ${
               votedContenderIndex === contenderIndex ? "btn-success" : "btn-outline-success"
             }`}
             onClick={() => handleClick(round, matchIndex, contenderIndex, submission)}
             disabled={isDisabled}
           >
-            {votedContenderIndex === contenderIndex ? "✓ Voted" : "👍 Vote"}
+            {votedContenderIndex === contenderIndex ? "✓ Voted" : "Vote"}
           </button>
-        <div className="votes">Votes count: {submission.votes}</div>
+        <div className="votes">Vote count: {submission.votes}</div>
       </div>
     );
   };
@@ -245,7 +245,7 @@ function Tournament() {
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">{selectedSubmission.submission.title}</h5>
-            <button onClick={closeModal} className="close-button">X</button>
+            <button onClick={closeModal} className="close-button">close</button>
           </div>
           <div className="modal-body">
             <p className="bracket-author">
