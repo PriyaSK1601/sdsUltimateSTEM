@@ -101,10 +101,11 @@
 .contender .title {
   font-weight: bold;
   font-size: 12px;
-  text-align: left; 
-  white-space: nowrap; 
-  text-overflow: ellipsis; /* add ellipsis when text exceeds the container  */
+  text-align: center; 
   width: 100%; 
+  overflow: hidden; /* to hide anything that doesn't fit in the containing element. */
+  white-space: nowrap; /* to make sure the line doesn't break when it is longer than the containing div. */
+  text-overflow: ellipsis; /* to do what you want. */
 }
 
 .contender:hover {

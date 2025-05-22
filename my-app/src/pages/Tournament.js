@@ -296,7 +296,7 @@ function Tournament() {
             <div className="bracket-round">
               <div className="round-label">Winner</div>
               <div className="final-winner">
-                {finalWinner ? finalWinner.title : "No winner yet."}
+                {finalWinner ? finalWinner.title : "TBD"}
               </div>
             </div>
           </div>
