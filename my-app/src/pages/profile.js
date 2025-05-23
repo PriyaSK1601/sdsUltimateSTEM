@@ -14,7 +14,6 @@ function Profile() {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [submissions, setSubmissions] = useState([]);
-  const [userSubmissions, setUserSubmissions] = useState([]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -115,12 +114,14 @@ function Profile() {
     return () => unsubscribe();
   }, [navigate]);
 
+  // Logout
   const handleLogout = () => {
     signOut(auth).then(() => {
       navigate("/login");
     });
   };
 
+  //Edit Profile
   const handleEdit = () => {
     setIsEditing(true);
   };
@@ -194,7 +195,7 @@ function Profile() {
   //Admin tools: navigate to view all submissions
   const handleViewAllSubmissions = () => {
     navigate("/viewAllSubmissions");
-  };
+  }
 
   //Admin tools: reset votes for all submissions
   const emptyVotes = {
@@ -205,25 +206,26 @@ function Profile() {
   };
   
   const resetVotesForAll = async () => {
-  if (window.confirm("Are you sure you want to reset votes for ALL submissions?")) {
-    try {
-      const res = await fetch("http://localhost:3001/submissions/reset-votes", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+    if (window.confirm("Are you sure you want to reset votes for ALL submissions?")) {
+      try {
+        const res = await fetch("http://localhost:3001/submissions/reset-votes", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-      if (!res.ok) throw new Error("Reset failed");
-      localStorage.setItem("tournamentVotes", JSON.stringify(emptyVotes));
-      window.dispatchEvent(new Event("tournamentVotesReset"));
-      alert("Votes have been reset for all submissions.");
-    } catch (err) {
-      console.error("Failed to reset votes:", err);
-      alert("Failed to reset votes for all submissions.");
+        if (!res.ok) throw new Error("Reset failed");
+        localStorage.setItem("tournamentVotes", JSON.stringify(emptyVotes));
+        window.dispatchEvent(new Event("tournamentVotesReset"));
+        alert("Votes have been reset for all submissions.");
+      } catch (err) {
+        console.error("Failed to reset votes:", err);
+        alert("Failed to reset votes for all submissions.");
+      }
     }
-  }
-};
+  };
+
 
   //Admin profile: approve submission
   const handleApprove = async (submissionId) => {
@@ -249,7 +251,8 @@ function Profile() {
       alert("Failed to approve submission.");
     }
   };
-
+  
+  //Admin profile: decline submission
   const handleDecline = async (submissionId) => {
     try {
       const response = await fetch(
@@ -382,44 +385,93 @@ function Profile() {
                     <h2 className="mb-4">Previous Submissions</h2>
                     {}
                     <div className="submissions-scroll-container">
-                      <div className="submissions-list">
-                        {submissions.length > 0 ? (
-                          submissions.map((submission, index) => (
-                            <div className="view-submission-card" key={index}>
-                              {submission.image && (
-                                <img
-                                  className="view-card-image"
-                                  src={`http://localhost:3001/image/${submission._id}`}
-                                  alt={submission.title}
-                                />
-                              )}
-                              <div className="card-content">
-                                <div className="category">
-                                  {submission.category}
-                                </div>
-                                <div className="heading">
-                                  {submission.title}
-                                </div>
-                                <div className="description">
-                                  {submission.description}
-                                </div>
-                                <div className="author">
-                                  Status:{" "}
-                                  <span className="name">
-                                    {submission.status}
-                                  </span>{" "}
-                                  |{" "}
-                                  {new Date(
-                                    submission.entryDate
-                                  ).toLocaleDateString()}
-                                </div>
+                    <div className="submissions-list">
+                      {submissions.length > 0 ? (
+                        submissions.map((submission) => (
+                          <div className="view-submission-card" key={submission._id}>
+                            {submission.image && (
+                              <img
+                                className="view-card-image"
+                                src={`http://localhost:3001/image/${submission._id}`}
+                                alt={submission.title}
+                              />
+                            )}
+                            <div className="card-content">
+                              {/* CATEGORY */}
+                              <div className="category">
+                                {isEditing && editedSubmission?._id === submission._id ? (
+                                  <input
+                                    name="category"
+                                    value={editedSubmission.category}
+                                    onChange={handleProfileInputChange}
+                                    className="form-control"
+                                  />
+                                ) : (
+                                  submission.category
+                                )}
                               </div>
+
+                              {/* TITLE */}
+                              <div className="heading">
+                                {isEditing && editedSubmission?._id === submission._id ? (
+                                  <input
+                                    name="title"
+                                    value={editedSubmission.title}
+                                    onChange={handleProfileInputChange}
+                                    className="form-control"
+                                  />
+                                ) : (
+                                  submission.title
+                                )}
+                              </div>
+
+                              {/* DESCRIPTION */}
+                              <div className="description">
+                                {isEditing && editedSubmission?._id === submission._id ? (
+                                  <textarea
+                                    name="description"
+                                    value={editedSubmission.description}
+                                    onChange={handleProfileInputChange}
+                                    className="form-control"
+                                  />
+                                ) : (
+                                  submission.description
+                                )}
+                              </div>
+
+                              {/* AUTHOR */}
+                              <div className="author">
+                                Status:&nbsp;
+                                <span className="name">{submission.status}</span>&nbsp;|&nbsp;
+                                {new Date(submission.entryDate).toLocaleDateString()}
+                              </div>
+
+                              {/* BUTTONS: only show Edit / Save when status === "pending" */}
+                              {submission.status === "pending" && (
+                                <>
+                                  {isEditing && editedSubmission?._id === submission._id ? (
+                                    <button
+                                      className="btn btn-success btn-sm mt-2"
+                                      onClick={saveProfileEdit}                                    >
+                                      Save
+                                    </button>
+                                  ) : (
+                                    <button
+                                      className="btn btn-warning btn-sm mt-2"
+                                      onClick={() => startEditing(submission)}>
+                                      Edit
+                                    </button>
+                                  )}
+                                </>
+                              )}
                             </div>
-                          ))
-                        ) : (
-                          <p>You haven't submitted anything yet.</p>
-                        )}
-                      </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p>You haven't submitted anything yet.</p>
+                      )}
+
+                    </div>                    
                     </div>
                   </div>
                 )}
@@ -596,23 +648,22 @@ function Profile() {
                   <div>
                     <h2 className="mb-4">Admin Tools</h2>
                     <div className="py-1">
-                      <div className="mb-2">
-                        <button
-                          className="btn btn-secondary w-100"
-                          onClick={handleEditCountdown}
-                        >
-                          Edit countdown
-                        </button>
-                      </div>
-                      <div>
-                        <button
-                          className="btn btn-secondary w-100"
-                          onClick={handleViewAllSubmissions}
-                        >
-                          View/Restore all submissions
-                        </button>
-                      </div>
+                    <div className="mb-2">
+                      <button className="btn btn-secondary w-100" onClick={handleEditCountdown}>
+                        Edit countdown
+                      </button>
                     </div>
+                    <div className="mb-2">
+                      <button className="btn btn-secondary w-100" onClick={handleViewAllSubmissions}>
+                        View/Restore all submissions
+                      </button>
+                    </div>
+                    <div className="mb-2">
+                      <button className="btn btn-secondary w-100" onClick={resetVotesForAll}>
+                        Reset All Votes
+                      </button>
+                    </div>
+                </div>
                   </div>
                 ) : (
                   <div>
@@ -632,6 +683,6 @@ function Profile() {
       <ToastContainer />
     </div>
   );
-}
 
+};
 export default Profile;
