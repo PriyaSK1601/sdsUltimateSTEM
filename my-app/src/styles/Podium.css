@@ -24,11 +24,25 @@
   height: 80%;
   margin: 1rem auto;
   margin-top: 2%;
+  /*new*/
+  display: flex;
+  flex-direction: column;
 }
 
-.card-image {
-  background-size: cover;
-  background-position: center;
+.card-image-container {
+  height: 200px;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 1rem;
+  position: relative;
+}
+
+.card img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .card-content {
@@ -37,6 +51,7 @@
 
 .category-badge {
   margin-bottom: 0.5em;
+  color: black;
 }
 
 .heading {
