@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "../styles/profile.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import profileIcon from "../assets/profile_icon.png";
-import { auth, db } from "./firebase";
-import { signOut, onAuthStateChanged, updatePassword } from "firebase/auth";
+import { onAuthStateChanged, signOut, updatePassword } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import AdminAnalytics from "../components/adminAnalytics";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import profileIcon from "../assets/profile_icon.png";
+import "../styles/profile.css";
 import { logPageVisit } from "../utils/analytics";
+import { auth, db } from "./firebase";
 
 function Profile() {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [userSubmissions, setUserSubmissions] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,7 +23,10 @@ function Profile() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const navigate = useNavigate();
+  const [isEditing, setIsEditing]           = useState(false);
+  const [editedSubmission, setEditedSubmission] = useState(null);
 
+  //Fetch submissions based on admin/user
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
@@ -40,7 +43,7 @@ function Profile() {
     };
 
     if (user?.email === "admin@gmail.com") {
-      fetchSubmissions();
+      fetchSubmissions(); //Get all pending submissions
     }
 
     if (user?.email !== "admin@gmail.com") {
@@ -60,11 +63,24 @@ function Profile() {
       };
 
       if (user && user.email !== "admin@gmail.com") {
-        fetchUserSubmissions();
+        fetchUserSubmissions(); //Get all submissions with matching author name and getFullName()
       }
     }
   }, [user]);
 
+  //Gets users full name
+  const getFullName = () => {
+    if (userData && userData.firstName && userData.lastName) {
+      return `${userData.firstName} ${userData.lastName}`;
+    } else if (userData && userData.firstName) {
+      return userData.firstName;
+    } else if (user && user.displayName) {
+      return user.displayName;
+    }
+    return user?.email?.split("@")[0] || "User";
+  };
+
+  //Check if user is logged in
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
@@ -170,25 +186,46 @@ function Profile() {
     }
   };
 
+  //Admin tools: navigate to edit countdown
   const handleEditCountdown = () => {
     navigate("/edit-countdown");
   };
 
+  //Admin tools: navigate to view all submissions
   const handleViewAllSubmissions = () => {
     navigate("/viewAllSubmissions");
   };
 
-  const getFullName = () => {
-    if (userData && userData.firstName && userData.lastName) {
-      return `${userData.firstName} ${userData.lastName}`;
-    } else if (userData && userData.firstName) {
-      return userData.firstName;
-    } else if (user && user.displayName) {
-      return user.displayName;
-    }
-    return user?.email?.split("@")[0] || "User";
+  //Admin tools: reset votes for all submissions
+  const emptyVotes = {
+    round1: Array(8).fill(null),
+    round2: Array(4).fill(null),
+    round3: Array(2).fill(null),
+    round4: Array(1).fill(null),
   };
+  
+  const resetVotesForAll = async () => {
+  if (window.confirm("Are you sure you want to reset votes for ALL submissions?")) {
+    try {
+      const res = await fetch("http://localhost:3001/submissions/reset-votes", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
+      if (!res.ok) throw new Error("Reset failed");
+      localStorage.setItem("tournamentVotes", JSON.stringify(emptyVotes));
+      window.dispatchEvent(new Event("tournamentVotesReset"));
+      alert("Votes have been reset for all submissions.");
+    } catch (err) {
+      console.error("Failed to reset votes:", err);
+      alert("Failed to reset votes for all submissions.");
+    }
+  }
+};
+
+  //Admin profile: approve submission
   const handleApprove = async (submissionId) => {
     try {
       const response = await fetch(
@@ -234,6 +271,43 @@ function Profile() {
     } catch (error) {
       console.error("Error declining submission:", error);
       alert("Failed to decline submission.");
+    }
+  };
+
+  //Edit button logic
+  const startEditing = (submission) => {
+    setIsEditing(true);
+    // shallow-copy so we can edit fields locally
+    setEditedSubmission({ ...submission });
+  };
+  const handleProfileInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedSubmission((prev) => ({ ...prev, [name]: value }));
+  };
+
+  //Save submission edits 
+  const saveProfileEdit = async () => {
+    if (!editedSubmission) return;
+    try {
+      const res = await fetch(
+        `http://localhost:3001/submissions/${editedSubmission._id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editedSubmission),
+        }
+      );
+      if (!res.ok) throw new Error("Save failed");
+
+      // update local list
+      setSubmissions((prev) =>
+        prev.map((s) => (s._id === editedSubmission._id ? editedSubmission : s))
+      );
+      toast.success("Submission updated!");
+      setIsEditing(false);
+      setEditedSubmission(null);
+    } catch (err) {
+      toast.error("Edit failed: " + err.message);
     }
   };
 
@@ -555,6 +629,7 @@ function Profile() {
           </div>
         </>
       )}
+      <ToastContainer />
     </div>
   );
 }

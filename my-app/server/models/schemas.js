@@ -38,8 +38,11 @@ const voteSchema = new Schema({
   firebaseUID: { type: String, required: true },
   submissionId: { type: Schema.Types.ObjectId, ref: "Submission", required: true },
   round: { type: Number, required: true },
-  timestamp: { type: Date, default: Date.now },
+  matchIndex: { type: Number, required: true },
 });
+
+// 1 user / 1 match / 1 round → only one vote allowed
+voteSchema.index({ firebaseUID: 1, round: 1, matchIndex: 1 }, { unique: true });
 
 const Vote = mongoose.model("Vote", voteSchema, "vote-data");
 
