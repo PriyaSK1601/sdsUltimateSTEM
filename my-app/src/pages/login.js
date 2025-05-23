@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { auth } from "./firebase";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import SignInwithGoogle from "./signInWIthGoogle";
 import "../styles/login.css"; 
 import { useNavigate } from "react-router-dom";
 
@@ -78,8 +77,6 @@ function Login() {
           <a href="/forgotPass" className="link">Forgot Password?</a>
 
         </p>
-
-        <SignInwithGoogle />
       </form>
     </div>
   );

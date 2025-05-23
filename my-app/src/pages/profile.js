@@ -663,8 +663,21 @@ function Profile() {
                         Reset All Votes
                       </button>
                     </div>
-                </div>
+                    <div className="mb-2">
+                      <button
+                        className="btn btn-secondary w-100"
+                        onClick={() =>
+                          window.open(
+                            "https://console.firebase.google.com/u/0/project/ultimate-stem/analytics/app/web:MGVjOGI4ZjMtYzNiZi00YTEwLWJjZmUtMzA4ZjJiNzMyOTU5/overview/reports~2Fdashboard%3Fr%3Dfirebase-overview&fpn%3D641943210134",
+                            "_blank"
+                          )
+                        }
+                      >
+                        View Firebase Analytics
+                      </button>
+                    </div>
                   </div>
+                </div>
                 ) : (
                   <div>
                     <h2 className="mb-4">Previous Votes</h2>
