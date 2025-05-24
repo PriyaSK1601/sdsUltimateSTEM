@@ -5,6 +5,8 @@ import { setDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom"; 
 import "../styles/register.css"; // Import the CSS file
+import validateEmail from "./emailValidation";
+import {ToastContainer } from "react-toastify";
 
 function Register() {
   const [email, setEmail] = useState("");
@@ -15,6 +17,17 @@ function Register() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+ 
+    // Validate email address
+    const isEmailValid = await validateEmail(email);
+    if (!isEmailValid) {
+      console.log("Error: Invalid email address");
+      toast.error("Invalid email address. Please try again.", {
+        position: "bottom-center",
+      });
+      return;
+    }
+
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       const user = auth.currentUser;
@@ -103,6 +116,8 @@ function Register() {
           Already registered? <a href="/login" className="link">Login</a>
         </p>
       </form>
+      {/* renter toastify to screen display */}
+      <ToastContainer />
     </div>
   );
 }
