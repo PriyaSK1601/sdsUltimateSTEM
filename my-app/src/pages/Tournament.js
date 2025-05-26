@@ -16,49 +16,84 @@ function Tournament() {
   const [round2Winners, setRound2Winners] = useState(Array(4).fill(null));
   const [semiFinalWinners, setSemiFinalWinners] = useState(Array(2).fill(null));
   const [finalWinner, setFinalWinner] = useState(null);
-  const [votedMatches, setVotedMatches] = useState({
+  const [votedMatches, setVotedMatches] = React.useState({
     round1: Array(8).fill(null),
     round2: Array(4).fill(null),
     round3: Array(2).fill(null),
     round4: Array(1).fill(null),
   });
   const [firebaseUID, setFirebaseUID] = useState(null);
-  const voteSection = useRef(null);
+  const voteSectionRef = useRef(null);
   const navigate = useNavigate();
-
+  
+  
+  //Sets user when logged in/out
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) setFirebaseUID(user.uid);
       else setFirebaseUID(null);
     });
     return () => unsubscribe();
+}, []);
+
+
+  //Gets 16 submissions for tournament 
+  useEffect(() => {
+    fetchTournamentData();
+    const interval = setInterval(fetchTournamentData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
-  const scrollToSection = (elementRef) => {
-    window.scrollTo({
-      top: elementRef.current.offsetTop,
-      behavior: "smooth",
-    });
+  //Fetches approved submissions
+  useEffect(() => {
+    fetchApprovedSubmissions();
+  }, []);
+
+  //Listener for reset votes 
+  useEffect(() => {
+    const emptyVotes = {
+      round1: Array(8).fill(null),
+      round2: Array(4).fill(null),
+      round3: Array(2).fill(null),
+      round4: Array(1).fill(null),
+    };
+
+    const handleReset = () => {
+      // 1. reset the “which button did I vote” state
+      setVotedMatches(emptyVotes);
+
+      // 2. zero out on-screen vote counts right away
+      setSubmissions(prev =>
+        prev.map(s => (s ? { ...s, votes: 0 } : s))
+      );
+    };
+
+    window.addEventListener("tournamentVotesReset", handleReset);
+    return () => window.removeEventListener("tournamentVotesReset", handleReset);
+}, []);
+
+  //Scrolls to tournamnet
+  const scrollToSection = (ref) => {
+    if (ref.current) {
+      window.scrollTo({ top: ref.current.offsetTop, behavior: "smooth" });
+    }
   };
 
+  //Gets data from databse every 5 seconds
   const fetchTournamentData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/tournament");
-      if (response.data && response.data.length > 0) {
-        setTournamentData(response.data);
+      const data = response.data;
+      setTournamentData(data || []);
+      if (data?.length > 0) {
         const now = new Date();
-        const activeRounds = response.data.filter(
-          (round) => new Date(round.endDate) > now
-        );
-
-        if (activeRounds.length > 0) {
-          activeRounds.sort(
-            (a, b) => new Date(a.endDate) - new Date(b.endDate)
-          );
+        const active = data.filter((round) => new Date(round.endDate) > now);
+        if (active.length > 0) {
+          active.sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
           setCurrentRound({
-            round: activeRounds[0].round,
-            name: activeRounds[0].roundName,
-            targetDate: activeRounds[0].endDate,
+            round: active[0].round,
+            name: active[0].roundName,
+            targetDate: active[0].endDate,
           });
           setIsActive(true);
         } else {
@@ -66,124 +101,107 @@ function Tournament() {
           setIsActive(false);
         }
       } else {
-        setTournamentData([]);
         setCurrentRound(null);
         setIsActive(false);
       }
-    } catch (error) {
-      console.error("Error fetching tournament data:", error);
+    } catch (err) {
+      console.error("Error fetching tournament data:", err);
       setCurrentRound(null);
       setIsActive(false);
     }
   };
 
-  useEffect(() => {
-    fetchTournamentData();
-    const intervalId = setInterval(fetchTournamentData, 5000);
-    return () => clearInterval(intervalId);
-  }, []);
-
-  const handleRoundComplete = () => {
-    fetchTournamentData();
-  };
-
-  useEffect(() => {
-    const fetchApprovedSubmissions = async () => {
-      try {
-        const response = await fetch("http://localhost:3001/submissions");
-        const data = await response.json();
-        const approved = data.filter(
-          (submission) => submission.status === "approved"
-        );
-        setSubmissions(approved.slice(0, 16));
-
-        const savedVotes = localStorage.getItem("tournamentVotes");
-        if (savedVotes) {
-          setVotedMatches(JSON.parse(savedVotes));
-        }
-      } catch (error) {
-        console.error("Error fetching submissions:", error);
-      }
-    };
-    fetchApprovedSubmissions();
-  }, []);
-
-  const paddedSubmissions = [...submissions];
-  while (paddedSubmissions.length < 16) {
-    paddedSubmissions.push(null);
-  }
-  const isRound1Ready = paddedSubmissions.every((s) => s !== null);
-
-  const handleClick = async (round, matchIndex, contenderIndex, submission) => {
-    if (!submission || !firebaseUID) return;
-
+  //Gets approved submissions from backend
+  const fetchApprovedSubmissions = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:3001/submissions/${submission._id}/vote`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            firebaseUID,
-            round,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (response.ok) {
-        const updatedSubmission = result.submission;
-        const updatedSubmissions = submissions.map((s) =>
-          s._id === updatedSubmission._id ? updatedSubmission : s
-        );
-        setSubmissions(updatedSubmissions);
-
-        const roundKey = `round${round}`;
-        const newVotedMatches = { ...votedMatches };
-        newVotedMatches[roundKey][matchIndex] = contenderIndex;
-        setVotedMatches(newVotedMatches);
-        localStorage.setItem("tournamentVotes", JSON.stringify(newVotedMatches));
-
-        alert(`✅ Your vote for "${submission.title}" has been recorded!`);
-      } else {
-        alert(`⚠️ ${result.message || "Vote failed"}`);
-      }
-    } catch (error) {
-      console.error("Error voting:", error);
-      alert("⚠️ Error voting. Please try again.");
+      const response = await fetch("http://localhost:3001/submissions");
+      const data = await response.json();
+      const approved = data.filter((s) => s.status === "approved");
+      setSubmissions(approved.slice(0, 16));
+      const savedVotes = localStorage.getItem("tournamentVotes");
+      if (savedVotes) setVotedMatches(JSON.parse(savedVotes));
+    } catch (err) {
+      console.error("Error fetching submissions:", err);
     }
   };
 
-  const getContender = (submission, round, matchIndex, contenderIndex) => {
-    if (!submission) {
-      return <div className="contender empty">Waiting...</div>;
+  //Fetches winners from rounds 1 and 2 using their submission IDs.
+  //Filters winners from the submissions list.
+  const handleRoundComplete = async () => {
+    await fetchTournamentData();
+    try {
+      const res1 = await axios.get("http://localhost:3001/round-winners/1");
+      const winnerIds1 = res1.data.winners;
+      const winners1 = submissions.filter((s) => winnerIds1.includes(s._id));
+      setRound1Winners(winners1);
+
+      const res2 = await axios.get("http://localhost:3001/round-winners/2");
+      const winnerIds2 = res2.data.winners;
+      const winners2 = submissions.filter((s) => winnerIds2.includes(s._id));
+      setRound2Winners(winners2);
+    } catch (err) {
+      console.error("Failed to fetch round winners:", err);
     }
+  };
 
-    const roundWinners =
-      round === 1
-        ? round1Winners
-        : round === 2
-        ? round2Winners
-        : round === 3
-        ? semiFinalWinners
-        : round === 4
-        ? [finalWinner]
-        : [];
+  //Voting 
+  const handleClickVote = async (round, matchIndex, contenderIndex, submission) => {
+  if (!firebaseUID || !submission) return;          // must be logged in
 
-    const winner = roundWinners[matchIndex];
-    const isSelected = winner && winner._id === submission._id;
+  const roundKey       = `round${round}`;
+  const previousChoice = votedMatches[roundKey][matchIndex];
+  const isSameChoice   = previousChoice === contenderIndex; // user clicked same button
 
-    const roundKey = `round${round}`;
-    const votedContenderIndex = votedMatches[roundKey][matchIndex];
+  try {
+    // POST vote = backend
+    const res = await fetch("http://localhost:3001/votes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        firebaseUID,
+        round,
+        matchIndex,
+        submissionId: submission._id,
+      }),
+    });
 
-    const isDisabled =
-      votedContenderIndex !== null && votedContenderIndex !== contenderIndex;
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Vote failed");
+
+    //Update local vote matrix
+    const updated = { ...votedMatches };
+    updated[roundKey][matchIndex] = isSameChoice ? null : contenderIndex;
+    setVotedMatches(updated);
+
+    //Persist for THIS user only
+    localStorage.setItem(`votes_${firebaseUID}`, JSON.stringify(updated));
+
+    //Sync on-screen vote counts
+    if (data.oldSubmission) {
+      setSubmissions((prev) =>
+        prev.map((s) =>
+          s._id === data.oldSubmission._id ? data.oldSubmission : s
+        )
+      );
+    }
+    setSubmissions((prev) =>
+      prev.map((s) => (s._id === data.submission._id ? data.submission : s))
+    );
+  } catch (err) {
+    console.error(err);
+    alert(`⚠️ ${err.message}`);
+  }
+};
+
+  //Renders submission card
+  const renderContender = (submission, round, matchIdx, contenderIdx) => {
+    if (!submission) return <div className="contender empty">Waiting...</div>;
+
+    const voted = votedMatches[`round${round}`][matchIdx];
+    const disabled = voted !== null && voted !== contenderIdx;
 
     return (
-      <div className={`contender ${isDisabled ? "disabled" : ""}`}>
+      <div className={`contender ${disabled ? "disabled" : ""}`}>
         {submission.image && (
           <img
             className="bracket-image"
@@ -196,47 +214,63 @@ function Tournament() {
           <div className="bracket-category">{submission.category}</div>
           <div className="bracket-description">{submission.description}</div>
           <div className="bracket-author">
-            By <span className="name">{submission.author}</span>{" "}
-            {submission.date}
+            By <span className="name">{submission.author}</span> {submission.date}
           </div>
           <div className="bracket-votes">Votes: {submission.votes}</div>
           <button
             className={`btn btn-sm mt-2 ${
-              votedContenderIndex === contenderIndex
-                ? "btn-success"
-                : "btn-outline-success"
+              voted === contenderIdx ? "btn-success" : "btn-outline-success"
             }`}
-            onClick={() =>
-              handleClick(round, matchIndex, contenderIndex, submission)
-            }
-            disabled={isDisabled}
+            onClick={() => handleClickVote(round, matchIdx, contenderIdx, submission)}
+            disabled={disabled}
           >
-            {votedContenderIndex === contenderIndex ? "✓ Voted" : "👍 Vote"}
+            {voted === contenderIdx ? "✓ Voted" : "👍 Vote"}
           </button>
         </div>
       </div>
     );
   };
 
-  const getRoundMatches = (entries, round) => {
+  //Groups pairs of submissions (contenders) into matches for a given round
+  const renderMatches = (entries, round) => {
     const matches = [];
-    const totalMatches = Math.ceil(entries.length / 2);
-    for (let i = 0; i < totalMatches; i++) {
-      const submission1 = entries[i * 2] || null;
-      const submission2 = entries[i * 2 + 1] || null;
-
+    for (let i = 0; i < Math.ceil(entries.length / 2); i++) {
       matches.push(
         <div className="match" key={`round-${round}-match-${i}`}>
-          {getContender(submission1, round, i, 0)}
-          {getContender(submission2, round, i, 1)}
+          {renderContender(entries[i * 2], round, i, 0)}
+          {renderContender(entries[i * 2 + 1], round, i, 1)}
         </div>
       );
     }
     return matches;
   };
 
-  const handleSubmitIdea = () => navigate("/submission");
+  const handleSubmitIdea = () => {
+    navigate("/submission");
+  };
 
+  //Helper to find index for each match
+  const contenderIndexForId = (subId, roundKey, matchIdx) => {
+    const source = roundKey === "round1"
+      ? paddedSubmissions
+      : roundKey === "round2"
+        ? round1Winners
+        : roundKey === "round3"
+          ? round2Winners
+          : semiFinalWinners;            // round4
+
+    const a = source[matchIdx * 2];
+    const b = source[matchIdx * 2 + 1];
+    if (a && a._id === subId) return 0;
+    if (b && b._id === subId) return 1;
+    return null;
+  };
+
+  const paddedSubmissions = [...submissions];
+  while (paddedSubmissions.length < 16) paddedSubmissions.push(null);
+  const isRound1Ready = paddedSubmissions.every((s) => s !== null);
+
+  //JSX
   return (
     <div className="tournament-container">
       <div className="container my-3 row justify-content-center">
@@ -251,10 +285,7 @@ function Tournament() {
                 onRoundComplete={handleRoundComplete}
               />
               <div className="d-flex justify-content-center mt-4">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => scrollToSection(voteSection)}
-                >
+                <button className="btn btn-secondary" onClick={() => scrollToSection(voteSectionRef)}>
                   Vote Now!
                 </button>
               </div>
@@ -264,10 +295,7 @@ function Tournament() {
               <h2 className="fw-bold">Tournament has ended</h2>
               <p>Submit your book idea for the next tournament.</p>
               <div className="d-flex justify-content-center mt-4">
-                <button
-                  className="btn btn-secondary"
-                  onClick={handleSubmitIdea}
-                >
+                <button className="btn btn-secondary" onClick={handleSubmitIdea}>
                   Submit an Idea!
                 </button>
               </div>
@@ -275,42 +303,27 @@ function Tournament() {
           )}
         </div>
       </div>
+
       <div className="header">
-        {!isRound1Ready && (
-          <p className="warning">
-            ⚠️ Please ensure all 16 submissions are approved before starting the
-            tournament.
-          </p>
-        )}
         {submissions.length === 0 ? (
           <p>No submissions available yet.</p>
         ) : (
           <div className="bracket">
-            <div ref={voteSection} className="bracket-round">
+            <div ref={voteSectionRef} className="bracket-round">
               <div className="round-label">Round 1</div>
-              {getRoundMatches(paddedSubmissions, 1)}
+              {renderMatches(paddedSubmissions, 1)}
             </div>
             <div className="bracket-round">
               <div className="round-label">Round 2</div>
-              {getRoundMatches(round1Winners, 2)}
+              {renderMatches(round1Winners, 2)}
             </div>
             <div className="bracket-round">
               <div className="round-label">Round 3</div>
-              {getRoundMatches(round2Winners, 3)}
+              {renderMatches(round2Winners, 3)}
             </div>
             <div className="bracket-round">
               <div className="round-label">Round 4</div>
-              {getRoundMatches(semiFinalWinners, 4)}
-            </div>
-            <div className="bracket-round">
-              <div className="round-label">Champion</div>
-              <div className="winner">
-                {finalWinner ? (
-                  <>🏆 {finalWinner.title}</>
-                ) : (
-                  <div className="contender empty">Waiting...</div>
-                )}
-              </div>
+              {renderMatches(semiFinalWinners, 4)}
             </div>
           </div>
         )}

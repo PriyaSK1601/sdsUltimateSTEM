@@ -3,7 +3,7 @@ import CountdownTimer from "../components/CountdownTimer";
 import axios from "axios";
 
 function EditCountdown() {
-  const [numRounds, setNumRounds] = useState(1);
+  const numRounds = 4;
   const [rounds, setRounds] = useState([
     { index: 0, name: "Round 1", targetDate: "" },
   ]);
@@ -17,7 +17,6 @@ function EditCountdown() {
       await axios.delete("http://localhost:3001/tournament");
 
       prevDataRef.current = null;
-      setNumRounds(1);
       setRounds([{ index: 0, name: "Round 1", targetDate: "" }]);
       setIsEditing(false);
       setTournamentActive(false);
@@ -52,7 +51,6 @@ function EditCountdown() {
         }));
 
         setRounds(fetchedRounds);
-        setNumRounds(fetchedRounds.length);
         setIsEditing(true);
 
         // Find current active round
@@ -90,7 +88,6 @@ function EditCountdown() {
         if (prevDataRef.current !== null) {
           prevDataRef.current = null;
           if (!isEditing) {
-            setNumRounds(1);
             setRounds([{ index: 0, name: "Round 1", targetDate: "" }]);
           }
           setIsEditing(false);
@@ -102,7 +99,6 @@ function EditCountdown() {
       console.error("Error fetching tournament data:", error);
       if (!isEditing && prevDataRef.current !== null) {
         prevDataRef.current = null;
-        setNumRounds(1);
         setRounds([{ index: 0, name: "Round 1", targetDate: "" }]);
         setIsEditing(false);
         setTournamentActive(false);
@@ -125,35 +121,23 @@ function EditCountdown() {
     return () => clearInterval(intervalId);
   }, [isEditing]);
 
-  // Update rounds when numRounds changes
+  //
   useEffect(() => {
-    if (!isEditing) {
-      // Only update if admin is editing
-      const updatedRounds = [];
+  if (!isEditing) {
+    const updatedRounds = [];
 
-      for (let i = 0; i < numRounds; i++) {
-        if (i < rounds.length) {
-          updatedRounds.push(rounds[i]);
-        } else {
-          updatedRounds.push({
-            index: i,
-            name: `Round ${i + 1}`,
-            targetDate: "",
-          });
-        }
-      }
-
-      setRounds(updatedRounds);
+    for (let i = 0; i < 4; i++) {
+      updatedRounds.push({
+        index: i,
+        name: `Round ${i + 1}`,
+        targetDate: "",
+      });
     }
-  }, [numRounds]);
 
-  const handleNumRoundsChange = (e) => {
-    e.preventDefault(); // Prevent form submission
-    const value = parseInt(e.target.value);
-    if (value > 0 && value <= 10) {
-      setNumRounds(value);
-    }
-  };
+    setRounds(updatedRounds);
+  }
+}, [isEditing]);
+
 
   const handleRoundNameChange = (index, value) => {
     const updatedRounds = [...rounds];
@@ -290,20 +274,6 @@ function EditCountdown() {
               <form>
                 {!isEditing ? (
                   <>
-                    <div className="mb-4">
-                      <label className="form-label">
-                        Number of Tournament Rounds
-                      </label>
-                      <input
-                        className="form-control"
-                        type="number"
-                        min="1"
-                        max="10"
-                        value={numRounds}
-                        onChange={handleNumRoundsChange}
-                      />
-                    </div>
-
                     {rounds.map((round, index) => (
                       <div key={index} className="mb-4 p-3 border rounded">
                         <h5>{`Round ${index + 1}`}</h5>
