@@ -14,6 +14,15 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (email === "admin@gmail.com") {
+      toast.error("Admin must login through the Admin Login page.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
+    
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success("User logged in Successfully", { position: "top-center" });
