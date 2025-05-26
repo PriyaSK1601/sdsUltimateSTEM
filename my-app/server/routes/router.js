@@ -334,4 +334,76 @@ router.delete("/tournament", async (req, res) => {
   }
 });
 
+// Upload/Update profile photo
+router.post("/profile-photo", upload.single("profilePhoto"), async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: "No image file provided" });
+  }
+
+  try {
+    const profilePhotoData = {
+      email,
+      image: {
+        data: req.file.buffer,
+        contentType: req.file.mimetype,
+      },
+    };
+
+    // Update existing or create new profile photo
+    const updatedPhoto = await schemas.ProfilePhoto.findOneAndUpdate(
+      { email },
+      profilePhotoData,
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({ message: "Profile photo updated successfully" });
+  } catch (error) {
+    console.error("Error uploading profile photo:", error);
+    res.status(500).json({ message: "Error uploading profile photo" });
+  }
+});
+
+// Get profile photo by email
+router.get("/profile-photo/:email", async (req, res) => {
+  try {
+    const profilePhoto = await schemas.ProfilePhoto.findOne({ 
+      email: req.params.email 
+    });
+    
+    if (!profilePhoto || !profilePhoto.image || !profilePhoto.image.data) {
+      return res.status(404).json({ message: "Profile photo not found" });
+    }
+
+    res.contentType(profilePhoto.image.contentType);
+    res.send(profilePhoto.image.data);
+  } catch (error) {
+    console.error("Error fetching profile photo:", error);
+    res.status(500).json({ message: "Error fetching profile photo" });
+  }
+});
+
+// Delete profile photo by email
+router.delete("/profile-photo/:email", async (req, res) => {
+  try {
+    const result = await schemas.ProfilePhoto.findOneAndDelete({ 
+      email: req.params.email 
+    });
+    
+    if (!result) {
+      return res.status(404).json({ message: "Profile photo not found" });
+    }
+
+    res.status(200).json({ message: "Profile photo deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting profile photo:", error);
+    res.status(500).json({ message: "Error deleting profile photo" });
+  }
+});
+
 module.exports = router;

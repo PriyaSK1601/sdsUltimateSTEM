@@ -54,10 +54,20 @@ const roundWinnersSchema = new Schema({
 
 const RoundWinners = mongoose.model("RoundWinners", roundWinnersSchema, "round-winners");
 
+//Profile Photo Schema
+const profilePhotoSchema = new Schema({
+  email: { type: String, required: true, unique: true },
+  image: { data: Buffer, contentType: String, },
+  uploadDate: { type: Date, default: Date.now },
+});
+
+const ProfilePhoto = mongoose.model("ProfilePhoto", profilePhotoSchema, "profile-photos");
+
 // Export all models
 module.exports = {
   Submission,
   Tournament,
   Vote,
   RoundWinners,
+  ProfilePhoto,
 };

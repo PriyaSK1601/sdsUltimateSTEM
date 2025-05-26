@@ -24,6 +24,7 @@ function Profile() {
   const navigate = useNavigate();
   const [isEditing, setIsEditing]           = useState(false);
   const [editedSubmission, setEditedSubmission] = useState(null);
+  const [profilePhoto, setProfilePhoto] = useState(null);
 
   //Fetch submissions based on admin/user
   useEffect(() => {
@@ -65,6 +66,31 @@ function Profile() {
         fetchUserSubmissions(); //Get all submissions with matching author name and getFullName()
       }
     }
+  }, [user]);
+
+  //Fetch profile photo
+  useEffect(() => {
+    const fetchProfilePhoto = async () => {
+      if (user?.email) {
+        try {
+          const response = await fetch(
+            `http://localhost:3001/profile-photo/${encodeURIComponent(
+              user.email
+            )}`
+          );
+          if (response.ok) {
+            const blob = await response.blob();
+            const photoUrl = URL.createObjectURL(blob);
+            setProfilePhoto(photoUrl);
+          }
+        } catch (error) {
+          console.error("Error fetching profile photo:", error);
+          setProfilePhoto(null);
+        }
+      }
+    };
+
+    fetchProfilePhoto();
   }, [user]);
 
   //Gets users full name
@@ -313,6 +339,61 @@ function Profile() {
       toast.error("Edit failed: " + err.message);
     }
   };
+  
+//Upload photo
+  const handlePhotoUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("profilePhoto", file);
+      formData.append("email", user.email);
+
+      const response = await fetch("http://localhost:3001/profile-photo", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        // Create URL for the uploaded photo
+        const photoUrl = URL.createObjectURL(file);
+        setProfilePhoto(photoUrl);
+        window.dispatchEvent(new Event("profilePhotoUpdated"));
+      }
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      alert("Error uploading photo");
+    }
+  };
+
+//Remove photo -> defaults to profile icon
+  const handleRemovePhoto = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:3001/profile-photo/${encodeURIComponent(
+            user.email
+          )}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (response.ok) {
+          setProfilePhoto(null);
+          window.dispatchEvent(new Event("profilePhotoRemoved"));
+        }
+      } catch (error) {
+        console.error("Error removing photo:", error);
+        alert("Error removing profile photo");
+      }
+  };
 
   return (
     <div className="container-fluid py-4">
@@ -385,93 +466,106 @@ function Profile() {
                     <h2 className="mb-4">Previous Submissions</h2>
                     {}
                     <div className="submissions-scroll-container">
-                    <div className="submissions-list">
-                      {submissions.length > 0 ? (
-                        submissions.map((submission) => (
-                          <div className="view-submission-card" key={submission._id}>
-                            {submission.image && (
-                              <img
-                                className="view-card-image"
-                                src={`http://localhost:3001/image/${submission._id}`}
-                                alt={submission.title}
-                              />
-                            )}
-                            <div className="card-content">
-                              {/* CATEGORY */}
-                              <div className="category">
-                                {isEditing && editedSubmission?._id === submission._id ? (
-                                  <input
-                                    name="category"
-                                    value={editedSubmission.category}
-                                    onChange={handleProfileInputChange}
-                                    className="form-control"
-                                  />
-                                ) : (
-                                  submission.category
-                                )}
-                              </div>
-
-                              {/* TITLE */}
-                              <div className="heading">
-                                {isEditing && editedSubmission?._id === submission._id ? (
-                                  <input
-                                    name="title"
-                                    value={editedSubmission.title}
-                                    onChange={handleProfileInputChange}
-                                    className="form-control"
-                                  />
-                                ) : (
-                                  submission.title
-                                )}
-                              </div>
-
-                              {/* DESCRIPTION */}
-                              <div className="description">
-                                {isEditing && editedSubmission?._id === submission._id ? (
-                                  <textarea
-                                    name="description"
-                                    value={editedSubmission.description}
-                                    onChange={handleProfileInputChange}
-                                    className="form-control"
-                                  />
-                                ) : (
-                                  submission.description
-                                )}
-                              </div>
-
-                              {/* AUTHOR */}
-                              <div className="author">
-                                Status:&nbsp;
-                                <span className="name">{submission.status}</span>&nbsp;|&nbsp;
-                                {new Date(submission.entryDate).toLocaleDateString()}
-                              </div>
-
-                              {/* BUTTONS: only show Edit / Save when status === "pending" */}
-                              {submission.status === "pending" && (
-                                <>
-                                  {isEditing && editedSubmission?._id === submission._id ? (
-                                    <button
-                                      className="btn btn-success btn-sm mt-2"
-                                      onClick={saveProfileEdit}                                    >
-                                      Save
-                                    </button>
-                                  ) : (
-                                    <button
-                                      className="btn btn-warning btn-sm mt-2"
-                                      onClick={() => startEditing(submission)}>
-                                      Edit
-                                    </button>
-                                  )}
-                                </>
+                      <div className="submissions-list">
+                        {submissions.length > 0 ? (
+                          submissions.map((submission) => (
+                            <div
+                              className="view-submission-card"
+                              key={submission._id}
+                            >
+                              {submission.image && (
+                                <img
+                                  className="view-card-image"
+                                  src={`http://localhost:3001/image/${submission._id}`}
+                                  alt={submission.title}
+                                />
                               )}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p>You haven't submitted anything yet.</p>
-                      )}
+                              <div className="card-content">
+                                {/* CATEGORY */}
+                                <div className="category">
+                                  {isEditing &&
+                                  editedSubmission?._id === submission._id ? (
+                                    <input
+                                      name="category"
+                                      value={editedSubmission.category}
+                                      onChange={handleProfileInputChange}
+                                      className="form-control"
+                                    />
+                                  ) : (
+                                    submission.category
+                                  )}
+                                </div>
 
-                    </div>                    
+                                {/* TITLE */}
+                                <div className="heading">
+                                  {isEditing &&
+                                  editedSubmission?._id === submission._id ? (
+                                    <input
+                                      name="title"
+                                      value={editedSubmission.title}
+                                      onChange={handleProfileInputChange}
+                                      className="form-control"
+                                    />
+                                  ) : (
+                                    submission.title
+                                  )}
+                                </div>
+
+                                {/* DESCRIPTION */}
+                                <div className="description">
+                                  {isEditing &&
+                                  editedSubmission?._id === submission._id ? (
+                                    <textarea
+                                      name="description"
+                                      value={editedSubmission.description}
+                                      onChange={handleProfileInputChange}
+                                      className="form-control"
+                                    />
+                                  ) : (
+                                    submission.description
+                                  )}
+                                </div>
+
+                                {/* AUTHOR */}
+                                <div className="author">
+                                  Status:&nbsp;
+                                  <span className="name">
+                                    {submission.status}
+                                  </span>
+                                  &nbsp;|&nbsp;
+                                  {new Date(
+                                    submission.entryDate
+                                  ).toLocaleDateString()}
+                                </div>
+
+                                {/* BUTTONS: only show Edit / Save when status === "pending" */}
+                                {submission.status === "pending" && (
+                                  <>
+                                    {isEditing &&
+                                    editedSubmission?._id === submission._id ? (
+                                      <button
+                                        className="btn btn-success btn-sm mt-2"
+                                        onClick={saveProfileEdit}
+                                      >
+                                        Save
+                                      </button>
+                                    ) : (
+                                      <button
+                                        className="btn btn-warning btn-sm mt-2"
+                                        onClick={() => startEditing(submission)}
+                                      >
+                                        Edit
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p>You haven't submitted anything yet.</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -481,15 +575,47 @@ function Profile() {
             <div className="col-md-7">
               <div className="profile-header mb-4">
                 <div className="d-flex align-items-center">
-                  <div className="profile-img-container">
-                    {userData?.photo ? (
-                      <img
-                        src={userData.photo}
-                        alt="Profile"
-                        className="img-fluid rounded-circle"
-                      />
-                    ) : (
-                      <img src={profileIcon} alt="Profile" />
+                  <div className="row flex-column">
+                    <div className="profile-img-container">
+                      {profilePhoto ? (
+                        <img
+                          src={profilePhoto}
+                          alt="Profile"
+                          className="img-fluid rounded-circle"
+                        />
+                      ) : (
+                        <img src={profileIcon} alt="Profile" />
+                      )}
+                    </div>
+
+                    {isEditing && (
+                      <div className="photo-edit-buttons">
+                        <input
+                          type="file"
+                          id="photoUpload"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          style={{ display: "none" }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-link p-0 text-decoration-none text-muted"
+                          onClick={() =>
+                            document.getElementById("photoUpload").click()
+                          }
+                        >
+                          Change Photo
+                        </button>
+                        {profilePhoto && (
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary mt-1"
+                            onClick={handleRemovePhoto}
+                          >
+                            Remove Photo
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
 
@@ -648,42 +774,51 @@ function Profile() {
                   <div>
                     <h2 className="mb-4">Admin Tools</h2>
                     <div className="py-1">
-                    <div className="mb-2">
-                      <button className="btn btn-secondary w-100" onClick={handleEditCountdown}>
-                        Edit countdown
-                      </button>
-                    </div>
-                    <div className="mb-2">
-                      <button className="btn btn-secondary w-100" onClick={handleViewAllSubmissions}>
-                        View/Restore all submissions
-                      </button>
-                    </div>
-                    <div className="mb-2">
-                      <button className="btn btn-secondary w-100" onClick={resetVotesForAll}>
-                        Reset All Votes
-                      </button>
-                    </div>
-                    <div className="mb-2">
-                      <button
-                        className="btn btn-secondary w-100"
-                        onClick={() =>
-                          window.open(
-                            "https://console.firebase.google.com/u/0/project/ultimate-stem/analytics/app/web:MGVjOGI4ZjMtYzNiZi00YTEwLWJjZmUtMzA4ZjJiNzMyOTU5/overview/reports~2Fdashboard%3Fr%3Dfirebase-overview&fpn%3D641943210134",
-                            "_blank"
-                          )
-                        }
-                      >
-                        View Firebase Analytics
-                      </button>
+                      <div className="mb-2">
+                        <button
+                          className="btn btn-secondary w-100"
+                          onClick={handleEditCountdown}
+                        >
+                          Edit countdown
+                        </button>
+                      </div>
+                      <div className="mb-2">
+                        <button
+                          className="btn btn-secondary w-100"
+                          onClick={handleViewAllSubmissions}
+                        >
+                          View/Restore all submissions
+                        </button>
+                      </div>
+                      <div className="mb-2">
+                        <button
+                          className="btn btn-secondary w-100"
+                          onClick={resetVotesForAll}
+                        >
+                          Reset All Votes
+                        </button>
+                      </div>
+                      <div className="mb-2">
+                        <button
+                          className="btn btn-secondary w-100"
+                          onClick={() =>
+                            window.open(
+                              "https://console.firebase.google.com/u/0/project/ultimate-stem/analytics/app/web:MGVjOGI4ZjMtYzNiZi00YTEwLWJjZmUtMzA4ZjJiNzMyOTU5/overview/reports~2Fdashboard%3Fr%3Dfirebase-overview&fpn%3D641943210134",
+                              "_blank"
+                            )
+                          }
+                        >
+                          View Firebase Analytics
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
                 ) : (
                   <div>
                     <h2 className="mb-4">Previous Votes</h2>
                     <div className="row">
                       <div className="col-md-12">
-                        <div className="item-box"></div>
+                        <div className="item-box"> <p>No votes yet.</p></div> {/* TB REPLACED BY CONDITIONAL STMT */}
                       </div>
                     </div>
                   </div>
