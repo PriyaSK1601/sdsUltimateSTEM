@@ -1,31 +1,26 @@
-import React, { useEffect, useState, useRef } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CountdownTimer from "../components/CountdownTimer";
-import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/Tournament.css";
-import axios from "axios";
-import { auth } from "./firebase";
-import { onAuthStateChanged } from "firebase/auth";
 
 function Tournament() {
-  const [tournamentData, setTournamentData] = useState(null);
-  const [currentRound, setCurrentRound] = useState(null);
-  const [isActive, setIsActive] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [round1Winners, setRound1Winners] = useState(Array(8).fill(null));
   const [round2Winners, setRound2Winners] = useState(Array(4).fill(null));
   const [semiFinalWinners, setSemiFinalWinners] = useState(Array(2).fill(null));
   const [finalWinner, setFinalWinner] = useState(null);
-  const [votedMatches, setVotedMatches] = useState({
-    round1: Array(8).fill(null),
-    round2: Array(4).fill(null),
-    round3: Array(2).fill(null),
-    round4: Array(1).fill(null),
-  });
-  const [firebaseUID, setFirebaseUID] = useState(null);
-  const voteSectionRef = useRef(null);
-  const [activeRoundNumber, setActiveRoundNumber] = useState(null);
-  const navigate = useNavigate();
+  const [countdownData, setCountdownData] = useState(null);
+  const [tournamentData, setTournamentData] = useState(null);
+  const [currentRound, setCurrentRound] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // State for modal
+  const [showModal, setShowModal] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
+
+
+
 
     // TEMP MOCK DATA FOR STYLING - REMOVE LATER
   useEffect(() => {
@@ -42,6 +37,9 @@ function Tournament() {
   }, [submissions]);
 
 
+
+
+
   const openModal = (submission, matchIndex, contenderIndex, round) => {
     console.log("Opening modal with:", submission, matchIndex, contenderIndex, round);
     setSelectedSubmission({submission, matchIndex, contenderIndex, round});
@@ -54,60 +52,57 @@ function Tournament() {
     setShowModal(false);
   };
 
-  // Sets user when logged in/out
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) setFirebaseUID(user.uid);
-        else setFirebaseUID(null);
-      });
-      return () => unsubscribe();
-  }, []);
 
-  // Gets 16 submissions for tournament 
-  useEffect(() => {
-    fetchTournamentData();
-    const interval = setInterval(fetchTournamentData, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const [votedMatches, setVotedMatches] = useState({
+    round1: Array(8).fill(null),
+    round2: Array(4).fill(null),
+    round3: Array(2).fill(null),
+    round4: Array(1).fill(null),
+  });
+  const navigate = useNavigate();
 
-  // Fetches approved submissions
   useEffect(() => {
-    fetchApprovedSubmissions();
-  }, []);
-
-  // Call fetch round winners when round number changes
-  useEffect(() => {
-    if (submissions.length > 0) {
-      fetchRoundWinners();
-    }
-  }, [activeRoundNumber, submissions]);
-
-  // Listener for reset votes 
-  useEffect(() => {
-    const emptyVotes = {
-      round1: Array(8).fill(null),
-      round2: Array(4).fill(null),
-      round3: Array(2).fill(null),
-      round4: Array(1).fill(null),
+    const handleStorageChange = (e) => {
+      if (e.key === "tournamentData" || e.key === null) {
+        setRefreshKey((prevKey) => prevKey + 1);
+      }
     };
 
-    const handleReset = () => {
-      // 1. reset the “which button did I vote” state
-      setVotedMatches(emptyVotes);
+    window.addEventListener("storage", handleStorageChange);
 
-      // 2. zero out on-screen vote counts right away
-      setSubmissions(prev =>
-        prev.map(s => (s ? { ...s, votes: 0 } : s))
-      );
+    const loadTournamentData = () => {
+      const savedTournament = localStorage.getItem("tournamentData");
+      if (savedTournament) {
+        const parsedData = JSON.parse(savedTournament);
+        setTournamentData(parsedData);
+
+        if (parsedData.isActive && parsedData.rounds.length > 0) {
+          const currentRoundIndex = parsedData.currentRound;
+          if (currentRoundIndex < parsedData.rounds.length) {
+            setCurrentRound(parsedData.rounds[currentRoundIndex]);
+          } else {
+            setCurrentRound(null);
+          }
+        } else {
+          setCurrentRound(null);
+        }
+      } else {
+        setTournamentData(null);
+        setCurrentRound(null);
+      }
     };
 
-    window.addEventListener("tournamentVotesReset", handleReset);
-    return () => window.removeEventListener("tournamentVotesReset", handleReset);
-  }, []);
+    loadTournamentData();
+    const intervalId = setInterval(loadTournamentData, 2000);
 
-  // Check round completion
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [refreshKey]);
+
   useEffect(() => {
-    const checkRoundCompletion = async () => {
+    const fetchApprovedSubmissions = async () => {
       try {
         const response = await fetch("http://localhost:3001/submissions");
         const data = await response.json();
@@ -119,38 +114,20 @@ function Tournament() {
           setVotedMatches(JSON.parse(savedVotes));
         }
       } catch (error) {
-        console.error("Error checking round completion:", error);
+        console.error("Error fetching submissions:", error);
       }
     };
-
-    // Check every 10 seconds
-    const interval = setInterval(checkRoundCompletion, 10000);
-    return () => clearInterval(interval);
+    fetchApprovedSubmissions();
   }, []);
 
-  // Fetch current active round
-  useEffect(() => {
-    const fetchActiveRound = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:3001/tournament/current-round"
-        );
-        if (response.data.isActive) {
-          setActiveRoundNumber(response.data.round);
-        } else {
-          setActiveRoundNumber(null);
-        }
-      } catch (error) {
-        console.error("Error fetching active round:", error);
-        setActiveRoundNumber(null);
-      }
-    };
+  const paddedSubmissions = [...submissions];
+  while (paddedSubmissions.length < 16) {
+    paddedSubmissions.push(null);
+  }
+  const isRound1Ready = paddedSubmissions.every((s) => s !== null);
 
-    fetchActiveRound();
-    const interval = setInterval(fetchActiveRound, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
+  const handleClick = async (round, matchIndex, contenderIndex, submission) => {
+    if (!submission) return;
 
     const roundKey = `round${round}`;
     const votedContenderIndex = votedMatches[roundKey][matchIndex];
@@ -160,112 +137,57 @@ function Tournament() {
       return;
     }
     try {
-      // ONLY fetch winners for rounds that should be visible!!!
-      const promises = [];
+      const response = await fetch(`http://localhost:3001/submissions/${submission._id}/vote`, {
+        method: "PATCH",
+      });
 
-      if (activeRoundNumber >= 1) {
-        promises.push(
-          axios
-            .get("http://localhost:3001/round-winners/0")
-            .catch(() => ({ data: { winners: [] } }))
+      if (response.ok) {
+        const updatedSubmission = await response.json();
+
+        // Update local state with new votes
+        const updatedSubmissions = submissions.map((s) =>
+          s._id === updatedSubmission.submission._id ? updatedSubmission.submission : s
         );
-      } else {
-        promises.push(Promise.resolve({ data: { winners: [] } }));
-      }
+        setSubmissions(updatedSubmissions);
 
-      if (activeRoundNumber >= 2) {
-        promises.push(
-          axios
-            .get("http://localhost:3001/round-winners/1")
-            .catch(() => ({ data: { winners: [] } }))
-        );
-      } else {
-        promises.push(Promise.resolve({ data: { winners: [] } }));
-      }
+        // Update the voted matches tracking
+        const roundKey = `round${round}`;
+        const newVotedMatches = { ...votedMatches };
+        
+        // Store which contender was selected (0 or 1)
+        newVotedMatches[roundKey][matchIndex] = contenderIndex;
+        
+        setVotedMatches(newVotedMatches);
+        
+        // Save to localStorage
+        localStorage.setItem("tournamentVotes", JSON.stringify(newVotedMatches));
 
-      if (activeRoundNumber >= 3) {
-        promises.push(
-          axios
-            .get("http://localhost:3001/round-winners/2")
-            .catch(() => ({ data: { winners: [] } }))
-        );
+        alert(`✅ Your vote for "${submission.title}" has been recorded!`);
       } else {
-        promises.push(Promise.resolve({ data: { winners: [] } }));
-      }
-
-      const [res1, res2, res3] = await Promise.all(promises);
-
-      // Set Round 1 winners (for Round 2 bracket)
-      if (res1.data.winners.length > 0) {
-        const winners1 = submissions.filter((s) =>
-          res1.data.winners.includes(s._id)
-        );
-        // Ensure exactly 8 winners, pad with null if needed
-        const paddedWinners1 = [...winners1];
-        while (paddedWinners1.length < 8) paddedWinners1.push(null);
-        setRound1Winners(paddedWinners1.slice(0, 8)); // Ensure max 8
-      } else {
-        setRound1Winners(Array(8).fill(null));
-      }
-
-      // Set Round 2 winners (for Round 3 bracket)
-      if (res2.data.winners.length > 0) {
-        const winners2 = submissions.filter((s) =>
-          res2.data.winners.includes(s._id)
-        );
-        // Ensure exactly 4 winners, pad with null if needed
-        const paddedWinners2 = [...winners2];
-        while (paddedWinners2.length < 4) paddedWinners2.push(null);
-        setRound2Winners(paddedWinners2.slice(0, 4)); // Ensure max 4
-      } else {
-        setRound2Winners(Array(4).fill(null));
-      }
-
-      // Set Round 3 winners (for Round 4 bracket)
-      if (res3.data.winners.length > 0) {
-        const winners3 = submissions.filter((s) =>
-          res3.data.winners.includes(s._id)
-        );
-        // Ensure exactly 2 winners, pad with null if needed
-        const paddedWinners3 = [...winners3];
-        while (paddedWinners3.length < 2) paddedWinners3.push(null);
-        setSemiFinalWinners(paddedWinners3.slice(0, 2)); // Ensure max 2
-      } else {
-        setSemiFinalWinners(Array(2).fill(null));
+        console.error("Vote failed:", await response.text());
+        alert("⚠️ Vote failed. Please try again.");
       }
     } catch (error) {
-      console.error("Error fetching round winners:", error);
+      console.error("Error voting:", error);
+      alert("⚠️ Error voting. Please check your connection.");
     }
   };
-
 
   const getContender = (submission, round, matchIndex, contenderIndex) => {
     if (!submission) {
       return <div className="contender empty">TBD</div>;
     }
-  };
 
-  // Fetch winners from round
-  const handleRoundComplete = async () => {
-    await fetchTournamentData();
-    await fetchRoundWinners();
-  };
+    const roundWinners =
+      round === 1 ? round1Winners :
+      round === 2 ? round2Winners :
+      round === 3 ? semiFinalWinners :
+      round === 4 ? [finalWinner] : [];
 
-  // Voting
-  const handleClickVote = async (
-    round,
-    matchIndex,
-    contenderIndex,
-    submission
-  ) => {
-    if (!firebaseUID || !submission) return;
-
-    // Check if this round is currently active
-    if (activeRoundNumber !== round - 1) {
-      alert("Voting is only allowed during the active round!");
-      return;
-    }
-
+    const winner = roundWinners[matchIndex];
+    const isSelected = winner && winner._id === submission._id;
+    
+    // Check if this match has been voted on
     const roundKey = `round${round}`;
     const votedContenderIndex = votedMatches[roundKey][matchIndex];
     const isDisabled = votedContenderIndex !== null;
@@ -281,55 +203,37 @@ function Tournament() {
         <button
             className={`vote-btn btn-sm mt-2 ${
               votedContenderIndex === contenderIndex ? "btn-success" : "btn-outline-success"
-
             }`}
-            onClick={() =>
-              handleClickVote(round, matchIdx, contenderIdx, submission)
-            }
-            disabled={disabled || roundInactive}
-            title={roundInactive ? "Voting not active for this round" : ""}
+            onClick={() => handleClick(round, matchIndex, contenderIndex, submission)}
+            disabled={isDisabled}
           >
-
             {votedContenderIndex === contenderIndex ? "✓ Voted" : "Vote"}
-
           </button>
         <div className="votes">Vote count: {submission.votes}</div>
       </div>
     );
   };
 
-  // Groups pairs of submissions (contenders) into matches for a given round
-  const renderMatches = (entries, round) => {
+  const getRoundMatches = (entries, round) => {
     const matches = [];
-    // Determine expected number of matches for each round
-    const expectedMatches =
-      round === 1 ? 8 : round === 2 ? 4 : round === 3 ? 2 : 1;
-
-    for (let i = 0; i < expectedMatches; i++) {
-      const contender1 = entries[i * 2] || null;
-      const contender2 = entries[i * 2 + 1] || null;
+    const totalMatches = Math.ceil(entries.length / 2);
+    for (let i = 0; i < totalMatches; i++) {
+      const submission1 = entries[i * 2] || null;
+      const submission2 = entries[i * 2 + 1] || null;
 
       matches.push(
         <div className="match" key={`round-${round}-match-${i}`}>
-          {renderContender(contender1, round, i, 0)}
-          {renderContender(contender2, round, i, 1)}
+          {getContender(submission1, round, i, 0)}
+          {getContender(submission2, round, i, 1)}
         </div>
       );
     }
     return matches;
   };
 
-  // Navigates to submission page
-  const handleSubmitIdea = () => {
-    navigate("/submission");
-  };
+  const handleSubmitIdea = () => navigate("/submission");
+  const handleVoteNow = () => navigate("/vote");
 
-
-  const paddedSubmissions = [...submissions];
-  while (paddedSubmissions.length < 16) paddedSubmissions.push(null);
-  const isRound1Ready = paddedSubmissions.every((s) => s !== null);
-
-  // JSX
   return (
     <div className="tournament-container">
       <div className="container my-3 row justify-content-center">
@@ -340,15 +244,8 @@ function Tournament() {
               <h3>Ends in:</h3>
               <CountdownTimer
                 targetDate={currentRound.targetDate}
-                isActive={isActive}
-                onRoundComplete={handleRoundComplete}
+                isActive={tournamentData.isActive}
               />
-
-              <div className="d-flex justify-content-center mt-4">
-                <button className="btn btn-secondary" onClick={() => scrollToSection(voteSectionRef)}>
-                  Vote Now!
-                </button>
-              </div>
             </>
           ) : (
             <>
@@ -397,22 +294,21 @@ function Tournament() {
             tournament.
           </p>
         )}
-
         {submissions.length === 0 ? (
           <p>No submissions available yet.</p>
         ) : (
           <div className="bracket">
-            <div ref={voteSectionRef} className="bracket-round">
+            <div className="bracket-round">
               <div className="round-label">Round 1</div>
-              {renderMatches(paddedSubmissions, 1)}
+              {getRoundMatches(paddedSubmissions, 1)}
             </div>
             <div className="bracket-round">
               <div className="round-label">Round 2</div>
-              {renderMatches(round1Winners, 2)}
+              {getRoundMatches(round1Winners, 2)}
             </div>
             <div className="bracket-round">
               <div className="round-label">Round 3</div>
-              {renderMatches(round2Winners, 3)}
+              {getRoundMatches(round2Winners, 3)}
             </div>
             <div className="bracket-round">
               <div className="round-label">Round 4</div>
@@ -423,7 +319,6 @@ function Tournament() {
               <div className="final-winner">
                 {finalWinner ? finalWinner.title : "TBD"}
               </div>
-
             </div>
           </div>
         )}
