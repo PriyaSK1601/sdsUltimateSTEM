@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/Tournament.css";
 import CountdownTimer from "../components/CountdownTimer";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "../styles/Tournament.css";
 import axios from "axios";
 import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -16,7 +16,7 @@ function Tournament() {
   const [round2Winners, setRound2Winners] = useState(Array(4).fill(null));
   const [semiFinalWinners, setSemiFinalWinners] = useState(Array(2).fill(null));
   const [finalWinner, setFinalWinner] = useState(null);
-  const [votedMatches, setVotedMatches] = React.useState({
+  const [votedMatches, setVotedMatches] = useState({
     round1: Array(8).fill(null),
     round2: Array(4).fill(null),
     round3: Array(2).fill(null),
@@ -26,8 +26,34 @@ function Tournament() {
   const voteSectionRef = useRef(null);
   const [activeRoundNumber, setActiveRoundNumber] = useState(null);
   const navigate = useNavigate();
-  
-  
+
+    // TEMP MOCK DATA FOR STYLING - REMOVE LATER
+  useEffect(() => {
+    if (submissions.length === 0) {
+      const mockSubmissions = Array.from({ length: 16 }, (_, i) => ({
+        _id: `mock-id-${i}`,
+        title: `Book Idea ${i + 1}`,
+        author: `Author ${i + 1}`,
+        description: `This is a mock description for Book Idea ${i + 1}.`,
+        votes: Math.floor(Math.random() * 100),
+      }));
+      setSubmissions(mockSubmissions);
+    }
+  }, [submissions]);
+
+
+  const openModal = (submission, matchIndex, contenderIndex, round) => {
+    console.log("Opening modal with:", submission, matchIndex, contenderIndex, round);
+    setSelectedSubmission({submission, matchIndex, contenderIndex, round});
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    console.log("Closing modal");
+    setSelectedSubmission(null);
+    setShowModal(false);
+  };
+
   // Sets user when logged in/out
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -83,15 +109,14 @@ function Tournament() {
   useEffect(() => {
     const checkRoundCompletion = async () => {
       try {
-        const response = await axios.post(
-          "http://localhost:3001/tournament/process-round-completion"
-        );
-        if (response.data.message.includes("completed successfully")) {
-          // Round just completed, refresh data
-          await fetchTournamentData();
-          await fetchRoundWinners();
+        const response = await fetch("http://localhost:3001/submissions");
+        const data = await response.json();
+        const approved = data.filter((submission) => submission.status === "approved");
+        setSubmissions(approved.slice(0, 16));
 
-          window.dispatchEvent(new CustomEvent("tournamentVotesReset"));
+        const savedVotes = localStorage.getItem("tournamentVotes");
+        if (savedVotes) {
+          setVotedMatches(JSON.parse(savedVotes));
         }
       } catch (error) {
         console.error("Error checking round completion:", error);
@@ -126,8 +151,14 @@ function Tournament() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch all round winners
-  const fetchRoundWinners = async () => {
+
+    const roundKey = `round${round}`;
+    const votedContenderIndex = votedMatches[roundKey][matchIndex];
+
+    // Already voted
+    if (votedContenderIndex !== null) {
+      return;
+    }
     try {
       // ONLY fetch winners for rounds that should be visible!!!
       const promises = [];
@@ -207,56 +238,10 @@ function Tournament() {
     }
   };
 
-  // Scrolls to tournamnet
-  const scrollToSection = (ref) => {
-    if (ref.current) {
-      window.scrollTo({ top: ref.current.offsetTop, behavior: "smooth" });
-    }
-  };
 
-  // Gets data from databse every 5 seconds
-  const fetchTournamentData = async () => {
-    try {
-      const response = await axios.get("http://localhost:3001/tournament");
-      const data = response.data;
-      setTournamentData(data || []);
-      if (data?.length > 0) {
-        const now = new Date();
-        const active = data.filter((round) => new Date(round.endDate) > now);
-        if (active.length > 0) {
-          active.sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
-          setCurrentRound({
-            round: active[0].round,
-            name: active[0].roundName,
-            targetDate: active[0].endDate,
-          });
-          setIsActive(true);
-        } else {
-          setCurrentRound(null);
-          setIsActive(false);
-        }
-      } else {
-        setCurrentRound(null);
-        setIsActive(false);
-      }
-    } catch (err) {
-      console.error("Error fetching tournament data:", err);
-      setCurrentRound(null);
-      setIsActive(false);
-    }
-  };
-
-  // Gets approved submissions from backend
-  const fetchApprovedSubmissions = async () => {
-    try {
-      const response = await fetch("http://localhost:3001/submissions");
-      const data = await response.json();
-      const approved = data.filter((s) => s.status === "approved");
-      setSubmissions(approved.slice(0, 16));
-      const savedVotes = localStorage.getItem("tournamentVotes");
-      if (savedVotes) setVotedMatches(JSON.parse(savedVotes));
-    } catch (err) {
-      console.error("Error fetching submissions:", err);
+  const getContender = (submission, round, matchIndex, contenderIndex) => {
+    if (!submission) {
+      return <div className="contender empty">TBD</div>;
     }
   };
 
@@ -282,82 +267,21 @@ function Tournament() {
     }
 
     const roundKey = `round${round}`;
-    const previousChoice = votedMatches[roundKey][matchIndex];
-    const isSameChoice = previousChoice === contenderIndex;
-
-    try {
-      const res = await fetch("http://localhost:3001/votes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firebaseUID,
-          round: round - 1, // Convert to 0-based indexing for backend
-          matchIndex,
-          submissionId: submission._id,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Vote failed");
-
-      // Update local vote matrix
-      const updated = { ...votedMatches };
-      updated[roundKey][matchIndex] = isSameChoice ? null : contenderIndex;
-      setVotedMatches(updated);
-
-      // Persist for THIS user only
-      localStorage.setItem(`votes_${firebaseUID}`, JSON.stringify(updated));
-
-      // Sync on-screen vote counts
-      if (data.oldSubmission) {
-        setSubmissions((prev) =>
-          prev.map((s) =>
-            s._id === data.oldSubmission._id ? data.oldSubmission : s
-          )
-        );
-      }
-      setSubmissions((prev) =>
-        prev.map((s) => (s._id === data.submission._id ? data.submission : s))
-      );
-    } catch (err) {
-      console.error(err);
-      alert(`⚠️ ${err.message}`);
-    }
-  };
-
-  // Renders submission card
-  const renderContender = (submission, round, matchIdx, contenderIdx) => {
-    if (!submission) return <div className="contender empty">Waiting...</div>;
-
-    const voted = votedMatches[`round${round}`][matchIdx];
-    const disabled = voted !== null && voted !== contenderIdx;
-    const roundInactive = activeRoundNumber !== round - 1;
+    const votedContenderIndex = votedMatches[roundKey][matchIndex];
+    const isDisabled = votedContenderIndex !== null;
 
     return (
-      <div
-        className={`contender ${disabled ? "disabled" : ""} ${
-          roundInactive ? "round-inactive" : ""
-        }`}
+      <div className="contender"
+      onClick={() => openModal(submission, matchIndex, contenderIndex, round)}
       >
-        {submission.image && (
-          <img
-            className="bracket-image"
-            src={`http://localhost:3001/image/${submission._id}`}
-            alt={submission.title}
-          />
-        )}
-        <div className="card-content">
-          <div className="bracket-title">{submission.title}</div>
-          <div className="bracket-category">{submission.category}</div>
-          <div className="bracket-description">{submission.description}</div>
-          <div className="bracket-author">
-            By <span className="name">{submission.author}</span>{" "}
-            {submission.date}
-          </div>
-          <div className="bracket-votes">Votes: {submission.votes}</div>
-          <button
-            className={`btn btn-sm mt-2 ${
-              voted === contenderIdx ? "btn-success" : "btn-outline-success"
+       <div className="title">
+          {submission.title}
+        </div>
+
+        <button
+            className={`vote-btn btn-sm mt-2 ${
+              votedContenderIndex === contenderIndex ? "btn-success" : "btn-outline-success"
+
             }`}
             onClick={() =>
               handleClickVote(round, matchIdx, contenderIdx, submission)
@@ -365,13 +289,11 @@ function Tournament() {
             disabled={disabled || roundInactive}
             title={roundInactive ? "Voting not active for this round" : ""}
           >
-            {voted === contenderIdx
-              ? "✓ Voted"
-              : roundInactive
-              ? "🚫 Inactive"
-              : "👍 Vote"}
+
+            {votedContenderIndex === contenderIndex ? "✓ Voted" : "Vote"}
+
           </button>
-        </div>
+        <div className="votes">Vote count: {submission.votes}</div>
       </div>
     );
   };
@@ -421,6 +343,7 @@ function Tournament() {
                 isActive={isActive}
                 onRoundComplete={handleRoundComplete}
               />
+
               <div className="d-flex justify-content-center mt-4">
                 <button className="btn btn-secondary" onClick={() => scrollToSection(voteSectionRef)}>
                   Vote Now!
@@ -440,8 +363,41 @@ function Tournament() {
           )}
         </div>
       </div>
+      
+    {showModal && selectedSubmission && (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">{selectedSubmission.submission.title}</h5>
+            <button onClick={closeModal} className="close-button">✖</button>
+          </div>
+          <div className="modal-body">
+            <p className="bracket-author">
+              By {selectedSubmission.submission.author}
+            </p>
+            
+            <p><strong>Description: </strong>{selectedSubmission.submission.description}</p>
+            
+            {selectedSubmission.submission.image && (
+              <img
+                className="submission-image"
+                src={`http://localhost:3001/image/${selectedSubmission.submission._id}`}
+                alt={selectedSubmission.submission.title}
+              />
+            )}
+         <p><strong>Vote count: </strong>{selectedSubmission.submission.votes}</p>
+          </div>
+        </div>
+      </div>
+    )}
+    <div className="header">
+        {!isRound1Ready && (
+          <p className="warning">
+            ⚠️ Please ensure all 16 submissions are approved before starting the
+            tournament.
+          </p>
+        )}
 
-      <div className="header">
         {submissions.length === 0 ? (
           <p>No submissions available yet.</p>
         ) : (
@@ -460,7 +416,14 @@ function Tournament() {
             </div>
             <div className="bracket-round">
               <div className="round-label">Round 4</div>
-              {renderMatches(semiFinalWinners, 4)}
+              {getRoundMatches(semiFinalWinners, 4)}
+            </div>
+            <div className="bracket-round">
+              <div className="round-label">Winner</div>
+              <div className="final-winner">
+                {finalWinner ? finalWinner.title : "TBD"}
+              </div>
+
             </div>
           </div>
         )}
