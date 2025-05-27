@@ -1,6 +1,6 @@
 .podium-container {
   border-radius: 2em;
-  height: 35em;
+  min-height: 30em;
   position: relative;
 }
 
@@ -8,28 +8,28 @@
   font-weight: 700;
 }
 
-.card-container {
-  height: 22em;
-  width: 35em;
+.podium-container .card-container {
+  height: 20em;
+  max-width: 35em;
+  width: 100%;
   border-radius: 2em;
   position: relative;
   margin: 0 auto;
   display: flex;
   align-items: center;
-  top: 8%;
+  justify-content: center;
 }
 
-.card-container .card {
-  max-width: 80%;
-  height: 80%;
-  margin: 1rem auto;
-  margin-top: 2%;
-  /*new*/
+.podium-container .card-container .card {
+  width: 80%;
+  height: 85%;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
+  border: none;
 }
 
-.card-image-container {
+.podium-container .card-image-container {
   height: 200px;
   overflow-y: auto;
   display: flex;
@@ -39,48 +39,97 @@
   position: relative;
 }
 
-.card img {
+.podium-container .card img {
   width: 100%;
   height: auto;
   object-fit: contain;
 }
 
-.card-content {
+.podium-container .card-content {
   padding: 1em;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.category-badge {
+.podium-container .category-badge {
   margin-bottom: 0.5em;
   color: black;
 }
 
-.heading {
+.podium-container .heading {
   margin-bottom: 0.5em;
 }
 
-.description {
+.podium-container .description {
   margin-bottom: 0.5em;
+  flex-grow: 1;
 }
 
-.left-button {
+.podium-container .left-button {
   position: absolute;
-  left: -16%;
+  left: -120px;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  width: 3%;
+  z-index: 10;
 }
 
-.right-button {
+.podium-container .right-button {
   position: absolute;
-  right: -10%;
+  right: -120px;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  width: 3%;
+  z-index: 10;
 }
 
-.left-button img,
-.right-button img {
-  height: 3em;
+.podium-container .left-button img,
+.podium-container .right-button img {
+  height: 2.5em;
+  width: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .podium-container .card-container {
+    max-width: 90%;
+    height: 18em;
+  }
+  
+  .podium-container .left-button {
+    left: -40px;
+  }
+  
+  .podium-container .right-button {
+    right: -40px;
+  }
+  
+  .podium-container
+  .left-button img,
+  .right-button img {
+    height: 2em;
+  }
+}
+
+@media (max-width: 576px) {
+  .podium-container .card-container {
+    max-width: 95%;
+    height: 16em;
+  }
+  
+  .podium-container .left-button {
+    left: -30px;
+  }
+  
+  .podium-container .right-button {
+    right: -30px;
+  }
+  
+  .podium-container
+  .left-button img,
+  .right-button img {
+    height: 1.5em;
+  }
 }

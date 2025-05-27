@@ -40,12 +40,11 @@ function Podium() {
   };
 
 
-
   return (
-    <div className="row h-100 justify-content-center pt-5">
-      <div className="col-md-11 mt-5">
-        <div className="bg-secondary bg-opacity-25 p-5 mt-5 podium-container">
-          <h1 className="text-center">Previous Submissions</h1>
+    <div className="row justify-content-center py-5">
+      <div className="col-xl-10 col-lg-11 col-md-12">
+        <div className="bg-secondary bg-opacity-25 p-4 p-md-5 mt-5 mb-5 podium-container">
+          <h1 className="text-center mb-4">Previous Submissions</h1>
           <div className="bg-secondary bg-opacity-50 card-container">
             <button className="btn left-button" onClick={handlePrevious}>
               <img src={left} alt="left arrow" />
@@ -64,6 +63,7 @@ function Podium() {
                   <div className="card-image-container">
                     <img
                       src={`http://localhost:3001/image/${submissions[currentIndex]._id}`}
+                      alt="Submission"
                     />
                   </div>
                 )}
