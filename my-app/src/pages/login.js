@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { auth } from "./firebase";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import SignInwithGoogle from "./signInWIthGoogle";
 import "../styles/login.css"; 
 import { useNavigate } from "react-router-dom";
 
@@ -15,6 +14,15 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (email === "admin@gmail.com") {
+      toast.error("Admin must login through the Admin Login page.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
+    
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success("User logged in Successfully", { position: "top-center" });
@@ -78,8 +86,6 @@ function Login() {
           <a href="/forgotPass" className="link">Forgot Password?</a>
 
         </p>
-
-        <SignInwithGoogle />
       </form>
     </div>
   );
