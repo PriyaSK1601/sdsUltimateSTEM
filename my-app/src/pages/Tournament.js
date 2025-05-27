@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "../styles/Tournament.css";
-import CountdownTimer from "../components/CountdownTimer";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CountdownTimer from "../components/CountdownTimer";
+import "../styles/Tournament.css";
 
 function Tournament() {
   const [submissions, setSubmissions] = useState([]);
@@ -18,6 +18,27 @@ function Tournament() {
   // State for modal
   const [showModal, setShowModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+
+
+
+
+    // TEMP MOCK DATA FOR STYLING - REMOVE LATER
+  useEffect(() => {
+    if (submissions.length === 0) {
+      const mockSubmissions = Array.from({ length: 16 }, (_, i) => ({
+        _id: `mock-id-${i}`,
+        title: `Book Idea ${i + 1}`,
+        author: `Author ${i + 1}`,
+        description: `This is a mock description for Book Idea ${i + 1}.`,
+        votes: Math.floor(Math.random() * 100),
+      }));
+      setSubmissions(mockSubmissions);
+    }
+  }, [submissions]);
+
+
+
+
 
   const openModal = (submission, matchIndex, contenderIndex, round) => {
     console.log("Opening modal with:", submission, matchIndex, contenderIndex, round);
@@ -245,7 +266,7 @@ function Tournament() {
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">{selectedSubmission.submission.title}</h5>
-            <button onClick={closeModal} className="close-button">close</button>
+            <button onClick={closeModal} className="close-button">✖</button>
           </div>
           <div className="modal-body">
             <p className="bracket-author">
