@@ -33,6 +33,24 @@
   position: relative;
 }
 
+.contender.round-inactive {
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+
+.contender.round-inactive .bracket-title {
+  color: #6c757d;
+}
+
+.contender.round-inactive button {
+  cursor: not-allowed;
+}
+
+.round-inactive .bracket-votes {
+  font-style: italic;
+  color: #6c757d;
+}
+
 .round-label {
   font-weight: bold;
   margin-bottom: 20px;

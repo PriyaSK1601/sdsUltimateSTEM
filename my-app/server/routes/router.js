@@ -123,11 +123,24 @@ router.patch("/submissions/:submissionId/restore", async (req, res) => {
   }
 });
 
-// Vote count
+//Vote count
 router.post("/votes", async (req, res) => {
   const { firebaseUID, round, matchIndex, submissionId } = req.body;
   if (!firebaseUID || round == null || matchIndex == null || !submissionId)
     return res.status(400).json({ message: "Missing data" });
+
+  // Check if the current round is active
+  const now = new Date();
+  const activeRound = await schemas.Tournament.findOne({
+    round: round,
+    endDate: { $gt: now },
+  });
+
+  if (!activeRound) {
+    return res
+      .status(400)
+      .json({ message: "Voting is not allowed for this round at this time" });
+  }
 
   const Vote = schemas.Vote;
   const Submission = schemas.Submission;
@@ -156,7 +169,7 @@ router.post("/votes", async (req, res) => {
     return res.json({ action: "removed", submission: sub });
   }
 
-  // switch vote to other contender 
+  // switch vote to other contender
   const oldId = existing.submissionId;
   existing.submissionId = submissionId;
   await existing.save();
@@ -166,7 +179,11 @@ router.post("/votes", async (req, res) => {
     safeInc(submissionId, +1),
   ]);
 
-  return res.json({ action: "switched", oldSubmission: oldSub, submission: newSub });
+  return res.json({
+    action: "switched",
+    oldSubmission: oldSub,
+    submission: newSub,
+  });
 });
 
 // Get tournament data
@@ -234,49 +251,221 @@ router.patch("/submissions/:id/reset-votes", async (req, res) => {
   } catch (e) { res.status(500).json({ error: "reset-failed" }); }
 });
 
-// Advance to next round
+//Dynamically advance to next round
 router.patch("/tournament/advance", async (req, res) => {
   try {
-    const round = 1; // ✅ Hardcoded for now – only advancing Round 1 to Round 2
+    const { round } = req.body;
 
-    // Get all approved submissions and ensure 16 total
-    const submissions = await schemas.Submission.find({ status: "approved" }).sort({ entryDate: 1 });
-    const paddedSubmissions = [...submissions];
-
-    while (paddedSubmissions.length < 16) {
-      paddedSubmissions.push(null); // fallback if fewer than 16
+    if (round === undefined || round === null) {
+      return res.status(400).json({ message: "Round number is required" });
     }
 
-    const round1Winners = [];
+    let submissions,
+      winners = [];
 
-    for (let i = 0; i < 8; i++) {
-      const s1 = paddedSubmissions[i * 2];
-      const s2 = paddedSubmissions[i * 2 + 1];
+    if (round === 0) {
+      // Round 1 -> Round 2
+      submissions = await schemas.Submission.find({ status: "approved" }).sort({
+        entryDate: 1,
+      });
+      const paddedSubmissions = [...submissions];
+      while (paddedSubmissions.length < 16) paddedSubmissions.push(null);
 
-      if (s1 && !s2) {
-        round1Winners.push(s1._id); // s1 wins by default
-      } else if (!s1 && s2) {
-        round1Winners.push(s2._id); // s2 wins by default
-      } else if (s1 && s2) {
-        round1Winners.push(s1.votes >= s2.votes ? s1._id : s2._id); // ✅ vote comparison
+      for (let i = 0; i < 8; i++) {
+        const s1 = paddedSubmissions[i * 2];
+        const s2 = paddedSubmissions[i * 2 + 1];
+
+        if (s1 && !s2) {
+          winners.push(s1._id);
+        } else if (!s1 && s2) {
+          winners.push(s2._id);
+        } else if (s1 && s2) {
+          winners.push(s1.votes >= s2.votes ? s1._id : s2._id);
+        }
+      }
+    } else {
+      // For rounds 1, 2, 3 (advancing to rounds 2, 3, 4)
+      const previousWinners = await schemas.RoundWinners.findOne({
+        round: round - 1,
+      });
+      if (!previousWinners) {
+        return res
+          .status(400)
+          .json({ message: "Previous round winners not found" });
+      }
+
+      const previousSubmissions = await schemas.Submission.find({
+        _id: { $in: previousWinners.winners },
+      });
+
+      const numMatches = Math.floor(previousSubmissions.length / 2);
+      for (let i = 0; i < numMatches; i++) {
+        const s1 = previousSubmissions[i * 2];
+        const s2 = previousSubmissions[i * 2 + 1];
+
+        if (s1 && s2) {
+          winners.push(s1.votes >= s2.votes ? s1._id : s2._id);
+        } else if (s1) {
+          winners.push(s1._id);
+        } else if (s2) {
+          winners.push(s2._id);
+        }
       }
     }
 
-    // Save or overwrite round 1 winners in RoundWinners
+    // Save winners
     await schemas.RoundWinners.findOneAndUpdate(
-      { round: 1 },
-      { winners: round1Winners },
+      { round: round },
+      { winners: winners },
       { upsert: true, new: true }
     );
 
     res.status(200).json({
-      message: "Round 1 winners determined",
-      round: 1,
-      winners: round1Winners,
+      message: `Round ${round + 1} winners determined`,
+      round: round,
+      winners: winners,
     });
   } catch (error) {
     console.error("Error advancing tournament round:", error);
     res.status(500).json({ message: "Error advancing tournament round" });
+  }
+});
+
+// Get current active round
+router.get("/tournament/current-round", async (req, res) => {
+  try {
+    const now = new Date();
+    const activeRound = await schemas.Tournament.findOne({
+      endDate: { $gt: now }
+    }).sort({ round: 1 });
+    
+    if (activeRound) {
+      res.json({ 
+        round: activeRound.round,
+        roundName: activeRound.roundName,
+        endDate: activeRound.endDate,
+        isActive: true
+      });
+    } else {
+      res.json({ isActive: false });
+    }
+  } catch (error) {
+    console.error("Error fetching current round:", error);
+    res.status(500).json({ message: "Error fetching current round" });
+  }
+});
+
+//Check round completion
+router.post("/tournament/process-round-completion", async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Find most recently completed round
+    const completedRound = await schemas.Tournament.findOne({
+      endDate: { $lte: now },
+    }).sort({ round: -1 });
+
+    if (!completedRound) {
+      return res.json({ message: "No completed rounds found" });
+    }
+
+    const roundNumber = completedRound.round;
+
+    // Check if round has already been processed
+    const existingWinners = await schemas.RoundWinners.findOne({
+      round: roundNumber,
+    });
+    if (existingWinners) {
+      return res.json({ message: "Round already processed" });
+    }
+
+    let winners = [];
+
+    if (roundNumber === 0) {
+      // Round 1
+      const submissions = await schemas.Submission.find({
+        status: "approved",
+      }).sort({ entryDate: 1 });
+      const paddedSubmissions = [...submissions];
+      while (paddedSubmissions.length < 16) paddedSubmissions.push(null);
+
+      for (let i = 0; i < 8; i++) {
+        const s1 = paddedSubmissions[i * 2];
+        const s2 = paddedSubmissions[i * 2 + 1];
+
+        if (s1 && !s2) {
+          winners.push(s1._id);
+        } else if (!s1 && s2) {
+          winners.push(s2._id);
+        } else if (s1 && s2) {
+          winners.push(s1.votes >= s2.votes ? s1._id : s2._id);
+        }
+      }
+    } else {
+      // Rounds 1, 2, 3
+      const previousWinners = await schemas.RoundWinners.findOne({
+        round: roundNumber - 1,
+      });
+      if (!previousWinners) {
+        return res
+          .status(400)
+          .json({ message: "Previous round winners not found" });
+      }
+
+      const previousSubmissions = await schemas.Submission.find({
+        _id: { $in: previousWinners.winners },
+      });
+
+      const numMatches = Math.floor(previousSubmissions.length / 2);
+      for (let i = 0; i < numMatches; i++) {
+        const s1 = previousSubmissions[i * 2];
+        const s2 = previousSubmissions[i * 2 + 1];
+
+        if (s1 && s2) {
+          winners.push(s1.votes >= s2.votes ? s1._id : s2._id);
+        } else if (s1) {
+          winners.push(s1._id);
+        } else if (s2) {
+          winners.push(s2._id);
+        }
+      }
+    }
+
+    // Save winners
+    await schemas.RoundWinners.create({
+      round: roundNumber,
+      winners: winners,
+    });
+
+    // Reset all votes for next round...or should.... erm
+    await schemas.Submission.updateMany({}, { $set: { votes: 0 } });
+    await schemas.Vote.deleteMany({});
+
+    res.json({
+      message: `Round ${roundNumber + 1} completed successfully`,
+      round: roundNumber,
+      winners: winners,
+    });
+  } catch (error) {
+    console.error("Error processing round completion:", error);
+    res.status(500).json({ message: "Error processing round completion" });
+  }
+});
+
+// Get round winners
+router.get("/round-winners/:round", async (req, res) => {
+  try {
+    const round = parseInt(req.params.round);
+    const roundWinners = await schemas.RoundWinners.findOne({ round: round });
+    
+    if (roundWinners) {
+      res.json({ winners: roundWinners.winners });
+    } else {
+      res.json({ winners: [] });
+    }
+  } catch (error) {
+    console.error("Error fetching round winners:", error);
+    res.status(500).json({ message: "Error fetching round winners" });
   }
 });
 
