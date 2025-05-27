@@ -1,98 +1,123 @@
 .tournament-container {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 20px;
+  padding: 10px;
   min-height: 100vh;
   background-image: url("../assets/bg.png");
   background-size: cover;
   background-position: center;
-  overflow-x: auto;
-  box-sizing: border-box;
+}
+
+.tournament-container h2, .tournament-container h3 {
+  font-size: 1.5rem;
 }
 
 .bracket {
   display: flex;
   flex-wrap: nowrap;
+  flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  gap: 80px;
-  min-width: 800px; /* ensure horizontal scroll on small screens */
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 60px;
 }
 
 .bracket-round {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  gap: 30px;
   align-items: center;
   min-width: 180px;
   position: relative;
-  min-width: 180px;
+  margin-right: 20px;
+  margin-left: 20px;
+}
+
+.bracket-round:nth-child(2) .match {
+  margin-right: 85px;
+  margin-left: 85px;
+}
+
+.bracket-round:nth-child(3) .match {
+  margin-right: 255px;
+  margin-left: 255px;
+}
+
+.bracket-round:nth-child(4) .match {
+  margin-right: 595px;
+  margin-left: 595px;
 }
 
 .round-label {
   font-weight: bold;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #555;
   text-align: center;
-}
-
-/* Adjust spacing between matches in each round */
-.bracket-round:nth-child(1) .match {
-  margin-bottom: 15px;
-}
-
-.bracket-round:nth-child(2) .match {
-  margin-bottom: 200px; /* Spacing for round 2 */
-}
-
-.bracket-round:nth-child(2) {
-  margin-top: 150px; /* adjust the value as needed */
-  gap: 20px;
-}
-
-.bracket-round:nth-child(3) .match {
-margin-bottom: 600px; /* Increase spacing between matches */
-}
-
-.bracket-round:nth-child(3) {
-margin-top: 0; /* Ensure the entire round itself is not moved */
-}
-
-.bracket-round:nth-child(3) .match:last-child {
-  margin-bottom: 0; /* Removes extra spacing after the last match */
-}
-
-.bracket-round:nth-child(4) .match {
-  margin-bottom: 0;
+  min-width: 65px;
 }
 
 .match {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  position: relative;
+  font-size: 0.85rem;
   width: 100%;
-  font-size: 0.85rem; /* Smaller font */
-  gap: 0px; 
+  gap: 0px;
   position: relative;
+  margin-bottom: 60px;
+}
+
+.match::before {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 30px;
+  background-color: #ccc;
+  top: 100%;
+}
+
+.bracket-round:last-child .match::before {
+  display: none;
+}
+
+.bracket-round:not(:first-child) .match::after {
+  content: '';
+  position: absolute;
+  width: 172px;
+  height: 2px;
+  background-color: #ccc;
+  transform: translate(-185px, -40px);
+}
+
+.bracket-round:nth-child(3) .match::after {
+  width: 342px;
+  transform: translate(-270px, -40px);
+}
+
+.bracket-round:nth-child(4) .match::after {
+  width: 682px;
+  transform: translate(-440px, -40px);
+}
+
+.bracket-round:not(:first-child) .match::after {
+  left: 121%;
 }
 
 .contender {
   cursor: pointer;
-  padding: 10px; /* Add extra padding at the bottom */
+  padding: 10px;
   padding-bottom: 70px;
   text-align: left;
   border: 1px solid #ccc;
   margin: 5px;
   border-radius: 5px;
-  width: 150px; 
-  height: 80px; 
+  width: 130px;
+  height: 80px;
   justify-content: center;
-  align-items: flex-start; 
+  align-items: flex-start;
   overflow: hidden;
   background-color: #fafafa;
 }
@@ -100,28 +125,28 @@ margin-top: 0; /* Ensure the entire round itself is not moved */
 .contender .title {
   font-weight: bold;
   font-size: 12px;
-  text-align: center; 
-  width: 100%; 
-  overflow: hidden; /* to hide anything that doesn't fit in the containing element. */
-  white-space: nowrap; /* to make sure the line doesn't break when it is longer than the containing div. */
-  text-overflow: ellipsis; /* to do what you want. */
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .contender:hover {
   transform: scale(1.01);
   background-color: #fafafa;
+  box-shadow: 0 0 12px rgba(0,0,0,0.15);
 }
 
-.contender.empty {
-  background-color: #eee;
-  color: #aaa;
-  pointer-events: none;
-  text-align: center;
-  padding: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-overflow: ellipsis;
+.card-image {
+  background-color: rgb(236, 236, 236);
+  width: 100%;
+  height: 130px;
+  border-radius: 6px 6px 0 0;
+  background-size: cover;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .contender.disabled {
@@ -129,7 +154,11 @@ margin-top: 0; /* Ensure the entire round itself is not moved */
   cursor: not-allowed;
 }
 
-/* Card content styling */
+.contender .votes {
+  color: #555;
+  font-size: 10px;
+}
+
 .submission-image {
   max-width: 100%;
   height: auto;
@@ -143,10 +172,9 @@ margin-top: 0; /* Ensure the entire round itself is not moved */
   flex-direction: column;
   padding: 8px;
   overflow-y: auto;
-  flex-grow: 1;
-  scrollbar-width: thin;
   font-size: 12px;
   flex-grow: 1;
+  scrollbar-width: thin;
 }
 
 .card-content::-webkit-scrollbar {
@@ -164,57 +192,26 @@ margin-top: 0; /* Ensure the entire round itself is not moved */
 
 .bracket-category {
   text-transform: uppercase;
-  font-size: 0.7rem;
+  font-size: 0.7em;
   font-weight: 600;
   color: rgb(0, 0, 0);
-  margin-bottom: 5px;
+  padding: 10px 7px 0;
 }
 
-.bracket-description {
-  font-size: 0.75rem;
-  color: #666;
-  margin-bottom: 5px;
-  line-height: 1.3;
+.heading {
+  font-weight: 700;
+  font-size: large;
+  color: rgb(88, 87, 87);
+  padding: 5px;
 }
 
 .bracket-author {
   font-size: 0.9rem;
-  font-weight: bold;
-  color: gray;
   font-weight: 400;
+  color: gray;
   margin-top: auto;
   padding-top: 5px;
   border-top: 1px solid #f0f0f0;
-}
-
-.tournament-container h2, .tournament-container h3 {
-  font-size: 1.5rem; 
-}
-
-.round-label {
-  font-size: 1rem; 
-}
-
-.title {
-  font-size: 0.9rem;
-}
-
-.tournament-container {
-  padding: 10px;
-}
-
-.bracket-round {
-  margin-bottom: 10px; 
-}
-
-/* Smaller modal */
-.modal-dialog {
-  max-width: 400px;
-  margin: 30px auto;
-}
-
-.modal-body {
-  font-size: 0.9rem;
 }
 
 .modal-overlay {
@@ -235,24 +232,30 @@ margin-top: 0; /* Ensure the entire round itself is not moved */
   padding: 30px;
   border-radius: 8px;
   width: 450px;
-  max-height: 500px; 
-  height: auto; 
+  max-height: 500px;
+  height: auto;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   overflow-y: auto;
-  overflow-x: hidden; 
+  overflow-x: hidden;
+  text-align: left;
 }
 
 .modal-content::-webkit-scrollbar {
-  width: 7px; 
+  width: 7px;
 }
 
 .modal-content::-webkit-scrollbar-thumb {
-  background-color: #888; 
-  border-radius: 4px; 
+  background-color: #888;
+  border-radius: 4px;
 }
 
 .modal-content::-webkit-scrollbar-track {
-  background-color: #f1f1f1; 
+  background-color: #f1f1f1;
+}
+
+.modal-dialog {
+  max-width: 400px;
+  margin: 30px auto;
 }
 
 .modal-header {
@@ -261,7 +264,15 @@ margin-top: 0; /* Ensure the entire round itself is not moved */
   align-items: center;
 }
 
-/* close button with underline at hover */
+.modal-body {
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+.modal-body p {
+  margin: 5px 0;
+}
+
 .close-button {
   background: none;
   border: none;
@@ -276,20 +287,12 @@ margin-top: 0; /* Ensure the entire round itself is not moved */
   left: 0;
   bottom: 0;
   width: 0;
-  height: 1px; 
-  background-color: black; 
+  height: 1px;
+  background-color: black;
 }
 
 .close-button:hover::after {
   width: 100%;
-}
-
-.modal-body {
-  margin-top: 10px;
-}
-
-.modal-body p {
-  margin: 5px 0;
 }
 
 .vote-btn {
@@ -300,74 +303,12 @@ margin-top: 0; /* Ensure the entire round itself is not moved */
   border-radius: 5px;
 }
 
-/* Consistent spacing for matches in each round */
-.bracket-round .match {
-  margin-bottom: 60px; /* Standardize spacing between matches */
-}
-
-/* Add connecting lines */
-.match::after {
-  content: '';
-  position: absolute;
-  width: 30px;
-  height: 2px;
-  background-color: #ccc;
-  right: -30px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.contender .votes {
-  color: #555;
-  font-size: 10px;
-}
-
-.modal .modal-content {
-  text-align: left;
-}
-
-.bracket-round:last-child .match::after {
-  display: none;
-}
-
-/* vertical lines for round 1 */
-.bracket-round:not(:first-child) .match::before {
-  content: '';
-  position: absolute;
-  height: calc(100% + 15px);
-  width: 2px;
-  background-color: #ccc;
-  left: -50px;
-  top: 0;
-  bottom: 0px;
-}
-
-/* Vertical lines for round 2 */
-.bracket-round:nth-child(3) .match::before {
-  content: '';
-  position: absolute;
-  height: calc(100% + 190px); 
-  width: 2px;
-  background-color: #ccc;
-  top: -110px;
-}
-
-.bracket-round:nth-child(4) .match::before {
-  content: '';
-  position: absolute;
-  height: calc(100% + 600px); 
-  width: 2px;
-  background-color: #ccc;
-  top: -300px; 
-}
-
 .winner {
   margin-top: 30px;
   text-align: center;
   font-size: 1.8rem;
   color: #28a745;
   font-weight: bold;
-  padding: 15px 20px;
   background-color: #f8f9fa;
   border-radius: 8px;
   border: 2px solid #28a745;
@@ -383,26 +324,28 @@ margin-top: 0; /* Ensure the entire round itself is not moved */
   text-align: center;
 }
 
-/* Remove default connector since we're using our own */
 svg {
   display: none;
 }
 
-/* Responsive tweaks */
 @media (max-width: 1024px) {
   .bracket {
     gap: 60px;
   }
+
   .bracket-round {
     min-width: 160px;
   }
+
   .contender {
     max-width: 160px;
     height: 230px;
   }
+
   .bracket-image {
     height: 80px;
   }
+
   .winner {
     font-size: 1.5rem;
     min-width: 160px;
@@ -422,13 +365,16 @@ svg {
     gap: 50px;
     min-width: 650px;
   }
+
   .bracket-round {
     min-width: 130px;
   }
+
   .contender {
     max-width: 140px;
     height: 210px;
   }
+
   .bracket-image {
     height: 70px;
   }
@@ -439,4 +385,5 @@ svg {
 
   .bracket-round:nth-child(3) .match {
     margin-bottom: 150px;
-} }
+  }
+}
