@@ -24,6 +24,7 @@ function Tournament() {
   });
   const [firebaseUID, setFirebaseUID] = useState(null);
   const voteSectionRef = useRef(null);
+  const [activeRoundNumber, setActiveRoundNumber] = useState(null);
   const navigate = useNavigate();
   
   
@@ -49,6 +50,13 @@ function Tournament() {
     fetchApprovedSubmissions();
   }, []);
 
+  //call fetch round winners when round number changes
+  useEffect(() => {
+    if (submissions.length > 0) {
+      fetchRoundWinners();
+    }
+  }, [activeRoundNumber, submissions]);
+
   //Listener for reset votes 
   useEffect(() => {
     const emptyVotes = {
@@ -71,6 +79,134 @@ function Tournament() {
     window.addEventListener("tournamentVotesReset", handleReset);
     return () => window.removeEventListener("tournamentVotesReset", handleReset);
 }, []);
+
+//Check round completion
+useEffect(() => {
+  const checkRoundCompletion = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3001/tournament/process-round-completion"
+      );
+      if (response.data.message.includes("completed successfully")) {
+        // Round just completed, refresh data
+        await fetchTournamentData();
+        await fetchRoundWinners();
+
+        window.dispatchEvent(new CustomEvent("tournamentVotesReset"));
+      }
+    } catch (error) {
+      console.error("Error checking round completion:", error);
+    }
+  };
+
+  // Check every 10 seconds
+  const interval = setInterval(checkRoundCompletion, 10000);
+  return () => clearInterval(interval);
+}, []);
+
+//fetch current active round
+useEffect(() => {
+  const fetchActiveRound = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:3001/tournament/current-round"
+      );
+      if (response.data.isActive) {
+        setActiveRoundNumber(response.data.round);
+      } else {
+        setActiveRoundNumber(null);
+      }
+    } catch (error) {
+      console.error("Error fetching active round:", error);
+      setActiveRoundNumber(null);
+    }
+  };
+
+  fetchActiveRound();
+  const interval = setInterval(fetchActiveRound, 5000);
+  return () => clearInterval(interval);
+}, []);
+
+//Fetch all round winners
+const fetchRoundWinners = async () => {
+  try {
+    // ONLY fetch winners for rounds that should be visible!!!
+    const promises = [];
+
+    if (activeRoundNumber >= 1) {
+      promises.push(
+        axios
+          .get("http://localhost:3001/round-winners/0")
+          .catch(() => ({ data: { winners: [] } }))
+      );
+    } else {
+      promises.push(Promise.resolve({ data: { winners: [] } }));
+    }
+
+    if (activeRoundNumber >= 2) {
+      promises.push(
+        axios
+          .get("http://localhost:3001/round-winners/1")
+          .catch(() => ({ data: { winners: [] } }))
+      );
+    } else {
+      promises.push(Promise.resolve({ data: { winners: [] } }));
+    }
+
+    if (activeRoundNumber >= 3) {
+      promises.push(
+        axios
+          .get("http://localhost:3001/round-winners/2")
+          .catch(() => ({ data: { winners: [] } }))
+      );
+    } else {
+      promises.push(Promise.resolve({ data: { winners: [] } }));
+    }
+
+    const [res1, res2, res3] = await Promise.all(promises);
+
+    // Set Round 1 winners (for Round 2 bracket)
+    if (res1.data.winners.length > 0) {
+      const winners1 = submissions.filter((s) =>
+        res1.data.winners.includes(s._id)
+      );
+      // Ensure exactly 8 winners, pad with null if needed
+      const paddedWinners1 = [...winners1];
+      while (paddedWinners1.length < 8) paddedWinners1.push(null);
+      setRound1Winners(paddedWinners1.slice(0, 8)); // Ensure max 8
+    } else {
+      setRound1Winners(Array(8).fill(null));
+    }
+
+    // Set Round 2 winners (for Round 3 bracket)
+    if (res2.data.winners.length > 0) {
+      const winners2 = submissions.filter((s) =>
+        res2.data.winners.includes(s._id)
+      );
+      // Ensure exactly 4 winners, pad with null if needed
+      const paddedWinners2 = [...winners2];
+      while (paddedWinners2.length < 4) paddedWinners2.push(null);
+      setRound2Winners(paddedWinners2.slice(0, 4)); // Ensure max 4
+    } else {
+      setRound2Winners(Array(4).fill(null));
+    }
+
+    // Set Round 3 winners (for Round 4 bracket)
+    if (res3.data.winners.length > 0) {
+      const winners3 = submissions.filter((s) =>
+        res3.data.winners.includes(s._id)
+      );
+      // Ensure exactly 2 winners, pad with null if needed
+      const paddedWinners3 = [...winners3];
+      while (paddedWinners3.length < 2) paddedWinners3.push(null);
+      setSemiFinalWinners(paddedWinners3.slice(0, 2)); // Ensure max 2
+    } else {
+      setSemiFinalWinners(Array(2).fill(null));
+    }
+  } catch (error) {
+    console.error("Error fetching round winners:", error);
+  }
+};
 
   //Scrolls to tournamnet
   const scrollToSection = (ref) => {
@@ -125,41 +261,38 @@ function Tournament() {
     }
   };
 
-  //Fetches winners from rounds 1 and 2 using their submission IDs.
-  //Filters winners from the submissions list.
+  //Fetch winners from round
   const handleRoundComplete = async () => {
     await fetchTournamentData();
-    try {
-      const res1 = await axios.get("http://localhost:3001/round-winners/1");
-      const winnerIds1 = res1.data.winners;
-      const winners1 = submissions.filter((s) => winnerIds1.includes(s._id));
-      setRound1Winners(winners1);
-
-      const res2 = await axios.get("http://localhost:3001/round-winners/2");
-      const winnerIds2 = res2.data.winners;
-      const winners2 = submissions.filter((s) => winnerIds2.includes(s._id));
-      setRound2Winners(winners2);
-    } catch (err) {
-      console.error("Failed to fetch round winners:", err);
-    }
+    await fetchRoundWinners();
   };
 
-  //Voting 
-  const handleClickVote = async (round, matchIndex, contenderIndex, submission) => {
-  if (!firebaseUID || !submission) return;          // must be logged in
+//Voting
+const handleClickVote = async (
+  round,
+  matchIndex,
+  contenderIndex,
+  submission
+) => {
+  if (!firebaseUID || !submission) return;
 
-  const roundKey       = `round${round}`;
+  // Check if this round is currently active
+  if (activeRoundNumber !== round - 1) {
+    alert("Voting is only allowed during the active round!");
+    return;
+  }
+
+  const roundKey = `round${round}`;
   const previousChoice = votedMatches[roundKey][matchIndex];
-  const isSameChoice   = previousChoice === contenderIndex; // user clicked same button
+  const isSameChoice = previousChoice === contenderIndex;
 
   try {
-    // POST vote = backend
     const res = await fetch("http://localhost:3001/votes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         firebaseUID,
-        round,
+        round: round - 1, // Convert to 0-based indexing for backend
         matchIndex,
         submissionId: submission._id,
       }),
@@ -168,15 +301,15 @@ function Tournament() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Vote failed");
 
-    //Update local vote matrix
+    // Update local vote matrix
     const updated = { ...votedMatches };
     updated[roundKey][matchIndex] = isSameChoice ? null : contenderIndex;
     setVotedMatches(updated);
 
-    //Persist for THIS user only
+    // Persist for THIS user only
     localStorage.setItem(`votes_${firebaseUID}`, JSON.stringify(updated));
 
-    //Sync on-screen vote counts
+    // Sync on-screen vote counts
     if (data.oldSubmission) {
       setSubmissions((prev) =>
         prev.map((s) =>
@@ -199,9 +332,14 @@ function Tournament() {
 
     const voted = votedMatches[`round${round}`][matchIdx];
     const disabled = voted !== null && voted !== contenderIdx;
+    const roundInactive = activeRoundNumber !== round - 1;
 
     return (
-      <div className={`contender ${disabled ? "disabled" : ""}`}>
+      <div
+        className={`contender ${disabled ? "disabled" : ""} ${
+          roundInactive ? "round-inactive" : ""
+        }`}
+      >
         {submission.image && (
           <img
             className="bracket-image"
@@ -214,17 +352,25 @@ function Tournament() {
           <div className="bracket-category">{submission.category}</div>
           <div className="bracket-description">{submission.description}</div>
           <div className="bracket-author">
-            By <span className="name">{submission.author}</span> {submission.date}
+            By <span className="name">{submission.author}</span>{" "}
+            {submission.date}
           </div>
           <div className="bracket-votes">Votes: {submission.votes}</div>
           <button
             className={`btn btn-sm mt-2 ${
               voted === contenderIdx ? "btn-success" : "btn-outline-success"
             }`}
-            onClick={() => handleClickVote(round, matchIdx, contenderIdx, submission)}
-            disabled={disabled}
+            onClick={() =>
+              handleClickVote(round, matchIdx, contenderIdx, submission)
+            }
+            disabled={disabled || roundInactive}
+            title={roundInactive ? "Voting not active for this round" : ""}
           >
-            {voted === contenderIdx ? "✓ Voted" : "👍 Vote"}
+            {voted === contenderIdx
+              ? "✓ Voted"
+              : roundInactive
+              ? "🚫 Inactive"
+              : "👍 Vote"}
           </button>
         </div>
       </div>
@@ -234,11 +380,18 @@ function Tournament() {
   //Groups pairs of submissions (contenders) into matches for a given round
   const renderMatches = (entries, round) => {
     const matches = [];
-    for (let i = 0; i < Math.ceil(entries.length / 2); i++) {
+    // Determine expected number of matches for each round
+    const expectedMatches =
+      round === 1 ? 8 : round === 2 ? 4 : round === 3 ? 2 : 1;
+
+    for (let i = 0; i < expectedMatches; i++) {
+      const contender1 = entries[i * 2] || null;
+      const contender2 = entries[i * 2 + 1] || null;
+
       matches.push(
         <div className="match" key={`round-${round}-match-${i}`}>
-          {renderContender(entries[i * 2], round, i, 0)}
-          {renderContender(entries[i * 2 + 1], round, i, 1)}
+          {renderContender(contender1, round, i, 0)}
+          {renderContender(contender2, round, i, 1)}
         </div>
       );
     }
