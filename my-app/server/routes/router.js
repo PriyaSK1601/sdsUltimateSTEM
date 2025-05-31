@@ -205,6 +205,8 @@ router.post("/tournament", async (req, res) => {
 
     // First clear existing tournament data
     await schemas.Tournament.deleteMany({});
+    //Also clear existing round winners
+    await schemas.RoundWinners.deleteMany({}); 
 
     // Insert all new rounds
     const createdRounds = await schemas.Tournament.insertMany(
@@ -437,7 +439,21 @@ router.post("/tournament/process-round-completion", async (req, res) => {
       winners: winners,
     });
 
-    // Reset all votes for next round...or should.... erm
+    if (roundNumber === 3 && winners.length > 0) {
+      const tournamentId = `tournament_${Date.now()}`;
+      const finalWinnerId = winners[0]; // Should only be one winner from round 3
+
+      try {
+        await axios.post("http://localhost:3001/tournament-winner", {
+          tournamentId,
+          winnerId: finalWinnerId,
+        });
+      } catch (winnerError) {
+        console.error("Error storing tournament winner:", winnerError);
+      }
+    }
+
+    // Reset all votes for next round
     await schemas.Submission.updateMany({}, { $set: { votes: 0 } });
     await schemas.Vote.deleteMany({});
 
@@ -516,6 +532,7 @@ router.delete("/submissions/:id", async (req, res) => {
 router.delete("/tournament", async (req, res) => {
   try {
     await schemas.Tournament.deleteMany({});
+    await schemas.RoundWinners.deleteMany({}); //reset round winners as well
     res.status(200).json({ message: "Tournament reset successfully" });
   } catch (error) {
     console.error("Error resetting tournament:", error);

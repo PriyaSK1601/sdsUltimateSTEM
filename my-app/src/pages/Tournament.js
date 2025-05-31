@@ -99,8 +99,8 @@ useEffect(() => {
     }
   };
 
-  // Check every 10 seconds
-  const interval = setInterval(checkRoundCompletion, 10000);
+  // Check every 2 seconds
+  const interval = setInterval(checkRoundCompletion, 2000);
   return () => clearInterval(interval);
 }, []);
 
@@ -126,6 +126,13 @@ useEffect(() => {
   const interval = setInterval(fetchActiveRound, 5000);
   return () => clearInterval(interval);
 }, []);
+
+useEffect(() => {
+  // Clear winners when tournament data changes (new tournament created)
+  if (tournamentData && tournamentData.length === 0) {
+    clearAllWinners();
+  }
+}, [tournamentData]);
 
 //Fetch all round winners
 const fetchRoundWinners = async () => {
@@ -206,6 +213,13 @@ const fetchRoundWinners = async () => {
   } catch (error) {
     console.error("Error fetching round winners:", error);
   }
+};
+
+const clearAllWinners = () => {
+  setRound1Winners(Array(8).fill(null));
+  setRound2Winners(Array(4).fill(null));
+  setSemiFinalWinners(Array(2).fill(null));
+  setFinalWinner(null);
 };
 
   //Scrolls to tournamnet
@@ -438,7 +452,10 @@ const handleClickVote = async (
                 onRoundComplete={handleRoundComplete}
               />
               <div className="d-flex justify-content-center mt-4">
-                <button className="btn btn-secondary" onClick={() => scrollToSection(voteSectionRef)}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => scrollToSection(voteSectionRef)}
+                >
                   Vote Now!
                 </button>
               </div>
@@ -448,7 +465,10 @@ const handleClickVote = async (
               <h2 className="fw-bold">Tournament has ended</h2>
               <p>Submit your book idea for the next tournament.</p>
               <div className="d-flex justify-content-center mt-4">
-                <button className="btn btn-secondary" onClick={handleSubmitIdea}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleSubmitIdea}
+                >
                   Submit an Idea!
                 </button>
               </div>

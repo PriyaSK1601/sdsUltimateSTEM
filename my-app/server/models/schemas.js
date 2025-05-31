@@ -63,6 +63,7 @@ const profilePhotoSchema = new Schema({
 
 const ProfilePhoto = mongoose.model("ProfilePhoto", profilePhotoSchema, "profile-photos");
 
+
 // Export all models
 module.exports = {
   Submission,
