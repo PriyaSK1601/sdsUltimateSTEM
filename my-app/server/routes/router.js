@@ -3,6 +3,9 @@ const router = express.Router();
 const multer = require("multer");
 const upload = multer();
 const schemas = require("../models/schemas");
+const axios = require("axios");
+const bodyParser = require('body-parser');
+const { RoundWinners } = require("../models/schemas");
 
 // Create new submission
 router.post("/contact", upload.single("image"), async (req, res) => {
@@ -240,7 +243,6 @@ router.patch("/submissions/reset-votes", async (_req, res) => {
   }
 });
 
-
 // reset ONE submission
 router.patch("/submissions/:id/reset-votes", async (req, res) => {
   try {
@@ -251,86 +253,6 @@ router.patch("/submissions/:id/reset-votes", async (req, res) => {
     ]);
     res.json({ message: "Submission votes cleared." });
   } catch (e) { res.status(500).json({ error: "reset-failed" }); }
-});
-
-//Dynamically advance to next round
-router.patch("/tournament/advance", async (req, res) => {
-  try {
-    const { round } = req.body;
-
-    if (round === undefined || round === null) {
-      return res.status(400).json({ message: "Round number is required" });
-    }
-
-    let submissions,
-      winners = [];
-
-    if (round === 0) {
-      // Round 1 -> Round 2
-      submissions = await schemas.Submission.find({ status: "approved" }).sort({
-        entryDate: 1,
-      });
-      const paddedSubmissions = [...submissions];
-      while (paddedSubmissions.length < 16) paddedSubmissions.push(null);
-
-      for (let i = 0; i < 8; i++) {
-        const s1 = paddedSubmissions[i * 2];
-        const s2 = paddedSubmissions[i * 2 + 1];
-
-        if (s1 && !s2) {
-          winners.push(s1._id);
-        } else if (!s1 && s2) {
-          winners.push(s2._id);
-        } else if (s1 && s2) {
-          winners.push(s1.votes >= s2.votes ? s1._id : s2._id);
-        }
-      }
-    } else {
-      // For rounds 1, 2, 3 (advancing to rounds 2, 3, 4)
-      const previousWinners = await schemas.RoundWinners.findOne({
-        round: round - 1,
-      });
-      if (!previousWinners) {
-        return res
-          .status(400)
-          .json({ message: "Previous round winners not found" });
-      }
-
-      const previousSubmissions = await schemas.Submission.find({
-        _id: { $in: previousWinners.winners },
-      });
-
-      const numMatches = Math.floor(previousSubmissions.length / 2);
-      for (let i = 0; i < numMatches; i++) {
-        const s1 = previousSubmissions[i * 2];
-        const s2 = previousSubmissions[i * 2 + 1];
-
-        if (s1 && s2) {
-          winners.push(s1.votes >= s2.votes ? s1._id : s2._id);
-        } else if (s1) {
-          winners.push(s1._id);
-        } else if (s2) {
-          winners.push(s2._id);
-        }
-      }
-    }
-
-    // Save winners
-    await schemas.RoundWinners.findOneAndUpdate(
-      { round: round },
-      { winners: winners },
-      { upsert: true, new: true }
-    );
-
-    res.status(200).json({
-      message: `Round ${round + 1} winners determined`,
-      round: round,
-      winners: winners,
-    });
-  } catch (error) {
-    console.error("Error advancing tournament round:", error);
-    res.status(500).json({ message: "Error advancing tournament round" });
-  }
 });
 
 // Get current active round
@@ -434,10 +356,11 @@ router.post("/tournament/process-round-completion", async (req, res) => {
     }
 
     // Save winners
-    await schemas.RoundWinners.create({
-      round: roundNumber,
-      winners: winners,
-    });
+    await schemas.RoundWinners.updateOne(
+      { round: roundNumber },
+      { $set: { winners: winners } },
+      { upsert: true }
+    );
 
     if (roundNumber === 3 && winners.length > 0) {
       const tournamentId = `tournament_${Date.now()}`;
@@ -482,6 +405,45 @@ router.get("/round-winners/:round", async (req, res) => {
   } catch (error) {
     console.error("Error fetching round winners:", error);
     res.status(500).json({ message: "Error fetching round winners" });
+  }
+});
+
+//Get final winner 
+router.get("/tournament/final-winner", async (req, res) => {
+  try {
+    const finalRound = await RoundWinners.findOne({ round: 5 }).populate("winners");
+
+    if (!finalRound || !finalRound.winners || finalRound.winners.length === 0) {
+      return res.json({ winner: null });
+    }
+
+    // Return the first winner (should be only one)
+    res.json({ winner: finalRound.winners[0] });
+  } catch (err) {
+    console.error("Error fetching final winner:", err);
+    res.status(500).json({ error: "Failed to get final winner" });
+  }
+});
+
+
+router.post("/tournament-winner", async (req, res) => {
+  const { winnerId } = req.body;
+
+  if (!winnerId) {
+    return res.status(400).json({ error: "Missing winnerId in request body" });
+  }
+
+  try {
+    const updated = await RoundWinners.findOneAndUpdate(
+      { round: 5 },
+      { winners: [winnerId] },
+      { new: true, upsert: true }
+    );
+
+    res.status(200).json({ message: "Final winner set successfully", data: updated });
+  } catch (err) {
+    console.error("Error setting final winner:", err);
+    res.status(500).json({ error: "Failed to set final winner" });
   }
 });
 

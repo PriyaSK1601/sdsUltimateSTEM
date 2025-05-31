@@ -129,7 +129,7 @@ const handleDelete = async (id) => {
   return (
     <div className="container py-4">
       <ToastContainer />
-      <h2 className="mb-4">All Submissions</h2>
+      <h2 className="mb-4">Manage Submissions</h2>
       {submissions.length === 0 ? (
         <p>Loading submissions...</p>
       ) : (

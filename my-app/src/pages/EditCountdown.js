@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import CountdownTimer from "../components/CountdownTimer";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 
 function EditCountdown() {
@@ -24,7 +26,7 @@ function EditCountdown() {
 
       console.log("Tournament successfully reset!");
     } catch (error) {
-      console.error("Error resetting tournament:", error);
+      console.log("Error resetting tournament:", error);
     }
   };
 
@@ -155,7 +157,7 @@ function EditCountdown() {
     // Ensure all dates are filled and in chronological order
     for (let i = 0; i < rounds.length; i++) {
       if (!rounds[i].targetDate) {
-        alert(`Please set a date and time for ${rounds[i].name}`);
+        toast.warning(`Please set a date and time for ${rounds[i].name}`);
         return false;
       }
 
@@ -163,7 +165,7 @@ function EditCountdown() {
 
       // Ensure date is in the future
       if (i === 0 && currentDate <= new Date()) {
-        alert(`${rounds[0].name} must be set in the future`);
+        toast.warning(`${rounds[0].name} must be set in the future`);
         return false;
       }
 
@@ -171,7 +173,7 @@ function EditCountdown() {
       if (i > 0) {
         const prevDate = new Date(rounds[i - 1].targetDate);
         if (currentDate <= prevDate) {
-          alert(`${rounds[i].name} must be after ${rounds[i - 1].name}`);
+          toast.warning(`${rounds[i].name} must be after ${rounds[i - 1].name}`);
           return false;
         }
       }
@@ -205,10 +207,10 @@ function EditCountdown() {
       // Refresh tournament data from server
       fetchTournamentData();
 
-      alert("Tournament started successfully!");
+      toast.success("Tournament started successfully!");
     } catch (error) {
       console.error("Error starting tournament:", error);
-      alert("Failed to start tournament. Please try again.");
+      toast.error("Failed to start tournament. Please try again.");
     }
   };
 
@@ -217,10 +219,10 @@ function EditCountdown() {
     try {
       await resetTournament();
 
-      alert("Tournament reset successfully!");
+      toast.success("Tournament reset successfully!");
     } catch (error) {
       console.error("Error resetting tournament:", error);
-      alert("Failed to reset tournament. Please try again.");
+      toast.error("Failed to reset tournament. Please try again.");
     }
   };
 
@@ -364,6 +366,7 @@ function EditCountdown() {
           </div>
         </div>
       </div>
+     <ToastContainer />
     </div>
   );
 }

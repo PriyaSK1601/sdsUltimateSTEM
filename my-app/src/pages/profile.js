@@ -26,7 +26,7 @@ function Profile() {
   const [editedSubmission, setEditedSubmission] = useState(null);
   const [profilePhoto, setProfilePhoto] = useState(null);
 
-  //Fetch submissions based on admin/user
+  // Fetch submissions based on admin/user
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
@@ -63,12 +63,12 @@ function Profile() {
       };
 
       if (user && user.email !== "admin@gmail.com") {
-        fetchUserSubmissions(); //Get all submissions with matching author name and getFullName()
+        fetchUserSubmissions(); // Get all submissions with matching author name and getFullName()
       }
     }
   }, [user]);
 
-  //Fetch profile photo
+  // Fetch profile photo
   useEffect(() => {
     const fetchProfilePhoto = async () => {
       if (user?.email) {
@@ -93,7 +93,7 @@ function Profile() {
     fetchProfilePhoto();
   }, [user]);
 
-  //Gets users full name
+  // Gets users full name
   const getFullName = () => {
     if (userData && userData.firstName && userData.lastName) {
       return `${userData.firstName} ${userData.lastName}`;
@@ -105,7 +105,7 @@ function Profile() {
     return user?.email?.split("@")[0] || "User";
   };
 
-  //Check if user is logged in
+  // Check if user is logged in
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
@@ -147,7 +147,7 @@ function Profile() {
     });
   };
 
-  //Edit Profile
+  // Edit Profile
   const handleEdit = () => {
     setIsEditing(true);
   };
@@ -179,51 +179,51 @@ function Profile() {
         lastName,
       }));
 
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   };
 
   const handleChangePassword = async () => {
     try {
       if (newPassword !== confirmPassword) {
-        alert("New passwords don't match");
+        toast.warning("New passwords don't match");
         return;
       }
 
       if (newPassword.length < 6) {
-        alert("Password must be at least 6 characters");
+        toast.warning("Password must be at least 6 characters");
         return;
       }
 
       // Update password
       await updatePassword(user, newPassword);
 
-      alert("Password changed successfully!");
+      toast.success("Password changed successfully!");
       setIsChangingPassword(false);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
       console.error("Error changing password:", error);
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   };
 
-  //Admin tools: navigate to edit countdown
+  // Admin tools: navigate to edit countdown
   const handleEditCountdown = () => {
     navigate("/edit-countdown");
   };
 
-  //Admin tools: navigate to view all submissions
+  // Admin tools: navigate to view all submissions
   const handleViewAllSubmissions = () => {
     navigate("/viewAllSubmissions");
   }
 
-  //Admin tools: reset votes for all submissions
+  // Admin tools: reset votes for all submissions
   const emptyVotes = {
     round1: Array(8).fill(null),
     round2: Array(4).fill(null),
@@ -244,16 +244,16 @@ function Profile() {
         if (!res.ok) throw new Error("Reset failed");
         localStorage.setItem("tournamentVotes", JSON.stringify(emptyVotes));
         window.dispatchEvent(new Event("tournamentVotesReset"));
-        alert("Votes have been reset for all submissions.");
+        toast.success("Votes have been reset for all submissions.");
       } catch (err) {
         console.error("Failed to reset votes:", err);
-        alert("Failed to reset votes for all submissions.");
+        toast.error("Failed to reset votes for all submissions.");
       }
     }
   };
 
 
-  //Admin profile: approve submission
+  // Admin profile: approve submission
   const handleApprove = async (submissionId) => {
     try {
       const response = await fetch(
@@ -274,11 +274,11 @@ function Profile() {
       setSubmissions((prev) => prev.filter((sub) => sub._id !== submissionId));
     } catch (error) {
       console.error("Error approving submission:", error);
-      alert("Failed to approve submission.");
+      toast.error("Failed to approve submission.");
     }
   };
   
-  //Admin profile: decline submission
+  // Admin profile: decline submission
   const handleDecline = async (submissionId) => {
     try {
       const response = await fetch(
@@ -299,11 +299,11 @@ function Profile() {
       setSubmissions((prev) => prev.filter((sub) => sub._id !== submissionId));
     } catch (error) {
       console.error("Error declining submission:", error);
-      alert("Failed to decline submission.");
+      toast.error("Failed to decline submission.");
     }
   };
 
-  //Edit button logic
+  // Edit button logic
   const startEditing = (submission) => {
     setIsEditing(true);
     // shallow-copy so we can edit fields locally
@@ -314,7 +314,7 @@ function Profile() {
     setEditedSubmission((prev) => ({ ...prev, [name]: value }));
   };
 
-  //Save submission edits 
+  // Save submission edits 
   const saveProfileEdit = async () => {
     if (!editedSubmission) return;
     try {
@@ -340,14 +340,14 @@ function Profile() {
     }
   };
   
-//Upload photo
+// Upload photo
   const handlePhotoUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
+      toast.warning("Please select an image file");
       return;
     }
 
@@ -369,11 +369,11 @@ function Profile() {
       }
     } catch (error) {
       console.error("Error uploading photo:", error);
-      alert("Error uploading photo");
+      toast.error("Error uploading photo");
     }
   };
 
-//Remove photo -> defaults to profile icon
+// Remove photo -> defaults to profile icon
   const handleRemovePhoto = async () => {
       try {
         const response = await fetch(
@@ -391,7 +391,7 @@ function Profile() {
         }
       } catch (error) {
         console.error("Error removing photo:", error);
-        alert("Error removing profile photo");
+        toast.error("Error removing profile photo");
       }
   };
 
@@ -787,15 +787,7 @@ function Profile() {
                           className="btn btn-secondary w-100"
                           onClick={handleViewAllSubmissions}
                         >
-                          View/Restore all submissions
-                        </button>
-                      </div>
-                      <div className="mb-2">
-                        <button
-                          className="btn btn-secondary w-100"
-                          onClick={resetVotesForAll}
-                        >
-                          Reset All Votes
+                          Manage submissions
                         </button>
                       </div>
                       <div className="mb-2">
@@ -808,9 +800,18 @@ function Profile() {
                             )
                           }
                         >
-                          View Firebase Analytics
+                          View Firebase analytics
                         </button>
                       </div>
+                      <div className="mb-2">
+                        <button
+                          className="btn btn-secondary w-100"
+                          onClick={resetVotesForAll}
+                        >
+                          Reset all votes
+                        </button>
+                      </div>
+
                     </div>
                   </div>
                 ) : (
