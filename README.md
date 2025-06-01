@@ -22,10 +22,16 @@ Client: Chris Ferrie
    - npm install bootstrap@v5.3.3
    - npm install --save react-toastify
    - npm install firebase
-6. Start the application by running:
+   - npm install firebase-admin
+   - npm install mongoose
+   - npm install axios 
+   - npm install react-router-dom 
+
+6. Go to your MongoDB Atlas account and ensure that your current IP address is enabled under Network Access to allow application to connect to the MongoDB server.
+7. Start the application by running:
    - npm start
-7. Run the backend server in an additional terminal:
+8. Run the backend server in an additional terminal:
    - cd my-app
    - cd server
    - npm start
-8. The program should automatically open in your browser at http://localhost:3000.
+9. The program should automatically open in your browser at http://localhost:3000.
