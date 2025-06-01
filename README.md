@@ -5,17 +5,24 @@ Software Development Studio - Ultimate STEM Project
 # SDS-ULTIMATE_STEM
 
 Software Development Studio - Ultimate STEM Project
+
 Client:
 Chris Ferrie
 
-Team:
-Tamara Haque :
-Bao Minh Tam Phuong :
-Julia Pham : 24807606
-Shiva Priya Kadarla
-Anna Lazarevic : 24963326
-Michaela Sabio :
-Raizelle Nana :
+## Team
+- Tamara Haque :
+  
+- Bao Minh Tam Phuong :
+
+- Julia Pham : 24807606
+
+- Shiva Priya Kadarla
+
+- Anna Lazarevic : 24963326
+
+- Michaela Sabio :
+
+- Raizelle Nana :
 
 ## Getting Started
 1. You need to install node.js which you can download using this website (https://nodejs.org/en/download/)
