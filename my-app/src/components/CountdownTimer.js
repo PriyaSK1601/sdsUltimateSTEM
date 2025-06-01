@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "../styles/CountdownTimer.css";
+import axios from "axios";
 
-function CountdownTimer({ targetDate, isActive }) {
+function CountdownTimer({ targetDate, isActive, onRoundComplete }) {
   const [timeRemaining, setTimeRemaining] = useState({
     days: 0,
     hours: 0,
@@ -10,6 +11,11 @@ function CountdownTimer({ targetDate, isActive }) {
   });
 
   const [isExpired, setIsExpired] = useState(false);
+  const [transitionHandled, setTransitionHandled] = useState(false);
+
+  useEffect(() => {
+    setTransitionHandled(false);
+  }, [targetDate]);
 
   useEffect(() => {
     if (!isActive) {
@@ -23,6 +29,25 @@ function CountdownTimer({ targetDate, isActive }) {
 
       if (difference <= 0) {
         setIsExpired(true);
+
+        if (!transitionHandled) {
+          setTransitionHandled(true);
+
+          // Notify this round is complete
+          setTimeout(() => {
+            axios
+              .patch("http://localhost:3001/tournament/advance")
+              .then((response) => {
+                console.log("Round advanced:", response.data);
+                if (onRoundComplete) {
+                  onRoundComplete();
+                }
+              })
+              .catch((error) => {
+                console.error("Error advancing round:", error);
+              });
+          }, 1000);
+        }
         return { days: 0, hours: 0, minutes: 0, seconds: 0 };
       }
       setIsExpired(false);
@@ -42,7 +67,7 @@ function CountdownTimer({ targetDate, isActive }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [targetDate, isActive]);
+  }, [targetDate, isActive, transitionHandled, onRoundComplete]);
 
   const formatNumber = (num) => {
     return num.toString().padStart(2, "0");

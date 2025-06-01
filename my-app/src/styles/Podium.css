@@ -1,6 +1,6 @@
 .podium-container {
   border-radius: 2em;
-  height: 35em;
+  min-height: 30em;
   position: relative;
 }
 
@@ -8,64 +8,103 @@
   font-weight: 700;
 }
 
-.card-container {
-  height: 22em;
-  width: 35em;
+.podium-container .card-container {
+  height: 20em;
+  max-width: 35em;
+  width: 100%;
   border-radius: 2em;
   position: relative;
   margin: 0 auto;
   display: flex;
   align-items: center;
-  top: 8%;
+  justify-content: center;
 }
 
-.card-container .card {
-  max-width: 80%;
-  height: 80%;
-  margin: 1rem auto;
-  margin-top: 2%;
+.podium-container .card-container .card {
+  width: 80%;
+  height: 85%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  border: none;
 }
 
-.card-image {
-  background-size: cover;
-  background-position: center;
+.podium-container .card-image-container {
+  height: 200px;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 1rem;
+  position: relative;
 }
 
-.card-content {
-  padding: 1em;
+.podium-container .card img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
-.category-badge {
+.podium-container .card-content {
+  padding: 1em !important;
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow-y: auto;
+  max-height: none !important;
+}
+
+.podium-container .category-badge {
+  margin-bottom: 0.5em;
+  color: black;
+}
+
+.podium-container .heading {
   margin-bottom: 0.5em;
 }
 
-.heading {
+.podium-container .description {
   margin-bottom: 0.5em;
+  flex-grow: 1;
+  
 }
 
-.description {
-  margin-bottom: 0.5em;
-}
-
-.left-button {
+.podium-container .left-button {
   position: absolute;
-  left: -16%;
+  left: -120px;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  width: 3%;
+  z-index: 10;
 }
 
-.right-button {
+.podium-container .right-button {
   position: absolute;
-  right: -10%;
+  right: -120px;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  width: 3%;
+  z-index: 10;
 }
 
-.left-button img,
-.right-button img {
-  height: 3em;
+.podium-container .left-button img,
+.podium-container .right-button img {
+  height: 2.5em;
+  width: auto;
+}
+
+@media (max-width: 768px) {
+  .podium-container .card-container {
+    max-width: 90%;
+    height: 18em;
+  }
+  
+  .podium-container .left-button {
+    left: -40px;
+  }
+  
+  .podium-container .right-button {
+    right: -40px;
+  }
 }

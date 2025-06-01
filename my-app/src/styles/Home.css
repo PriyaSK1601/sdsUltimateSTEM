@@ -3,31 +3,15 @@
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
-  min-height: 200vh;
-  overflow-x: hidden;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
 
-.circle-container {
-  height: 24vw;
-  width: 24vw;
-  margin-top: -35%;
-  z-index: 2;
-  right: -65%;
-  pointer-events: none;
-}
-
-.book-image {
-  height: 17vw;
-  top: 15%;
-  right: -13%;
-  pointer-events: none;
+.header-wrapper {
+  position: relative;
 }
 
 .header-container {
-  width: 100%;
-  margin-left: -10%;
   border-radius: 2em;
   position: relative;
   z-index: 1;
@@ -38,47 +22,60 @@
 }
 
 .header-paragraph {
-  width: 75%;
+  max-width: 80%;
 }
 
 .button-container {
   display: flex;
-  gap: 10%;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.btn {
-  width: 9.8em;
+.header-container .btn {
+  min-width: 9.8em;
+  flex: 1;
 }
 
-@media (max-width: 1200px) {
-  .header-container {
-    width: 120%;
-  }
+.circle-container {
+  position: absolute;
+  top: 40%;
+  right: -17%;
+  width: clamp(200px, 20vw, 300px);
+  height: clamp(200px, 20vw, 300px);
+  background-color: rgba(108, 117, 125, 0.5);
+  border-radius: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+.book-image {
+  position: absolute;
+  width: 125%;
+  height: auto;
+  top: 15%;
+  right: -13%;
+}
+
+@media (max-width: 1500px) {
   .circle-container {
-    right: -70%;
+    right: -30%;
   }
 }
 
-@media (max-width: 1100px) {
-  .header-container {
-    width: 140%;
-  }
-
+@media (max-width: 768px) {
   .button-container {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .btn {
-    width: 20em;
+  .header-container .btn {
+    width: 100%;
+    min-width: auto;
   }
 
-  .button-two {
-    margin-top: 3%;
-  }
-
-  .circle-container {
-    margin-top: -35%;
-    right: -90%;
+  .header-paragraph {
+    text-align: center;
   }
 }

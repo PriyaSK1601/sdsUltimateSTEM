@@ -10,6 +10,7 @@ function Navbar() {
   const [user, setUser] = useState(null);
   const [ isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+  const [profilePhoto, setProfilePhoto] = useState(null);
 
   const [isExpanded, setIsExpanded] = useState(false);
   const toggleNavbar = () => {
@@ -37,6 +38,46 @@ function Navbar() {
 
     return () => unsubscribe();
   }, []);
+
+  //Fetch profile photo
+  useEffect(() => {
+    const fetchProfilePhoto = async () => {
+      if (user?.email) {
+        try {
+          const response = await fetch(
+            `http://localhost:3001/profile-photo/${encodeURIComponent(
+              user.email
+            )}`
+          );
+          if (response.ok) {
+            const blob = await response.blob();
+            const photoUrl = URL.createObjectURL(blob);
+            setProfilePhoto(photoUrl);
+          } 
+        } catch (error) {
+          console.error("Error fetching profile photo:", error);
+          setProfilePhoto(null);
+        }
+      } else {
+        setProfilePhoto(null); // No user is logged in, use default profile icon
+      }
+    };
+
+    const handleProfilePhotoUpdate = () => {
+      fetchProfilePhoto();
+    };
+
+    const handleProfilePhotoRemove = () => {
+      setProfilePhoto(null);
+    };
+
+    //Event listeners
+    window.addEventListener("profilePhotoUpdated", handleProfilePhotoUpdate);
+    window.addEventListener("profilePhotoRemoved", handleProfilePhotoRemove);
+   
+    fetchProfilePhoto();
+
+  }, [user]);
 
   const handleProfileClick = (e) => {
     e.preventDefault();
@@ -99,7 +140,11 @@ function Navbar() {
               {isExpanded && isSmScreen ? (
                 "Profile"
               ) : (
-                <img src={ProfileIcon} alt="Profile Icon" />
+                <img
+                  src={profilePhoto || ProfileIcon}
+                  alt="Profile Icon"
+                  className="profile-photo"
+                />
               )}
             </a>
           </li>

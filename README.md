@@ -1,7 +1,9 @@
 # SDS-ULTIMATE_STEM
 41113 Software Development Studio - Ultimate STEM Project 
 
-Developed by:
+Client: Chris Ferrie
+
+## Developed by:
 - Anna Lazarevic 24963326
 - Julia Pham 24807606
 - Shiva Priya Kadarla 25050877
@@ -11,7 +13,7 @@ Developed by:
 - Tamara Haque 24934426
 
 
-Compiling Instructions 
+## Compiling Instructions 
 1. Download and install Node.js from https://nodejs.org/en/download/. Make sure to enable the option to add it to your system PATH.
 2. Download the project by either cloning the main branch using GitHub Desktop or downloading the ZIP file from GitHub and extracting it to your desired location.
 3. Open the project folder in Visual Studio Code. Make sure the folder contains the package.json file.
@@ -22,4 +24,8 @@ Compiling Instructions
    - npm install firebase
 6. Start the application by running:
    - npm start
-7. The program should automatically open in your browser at http://localhost:3000.
+7. Run the backend server in an additional terminal:
+   - cd my-app
+   - cd server
+   - npm start
+8. The program should automatically open in your browser at http://localhost:3000.

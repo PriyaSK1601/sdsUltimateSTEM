@@ -1,6 +1,6 @@
 .footer {
   background-color: rgb(205, 205, 205);
-  top: 201%;
+  width: 100%;
 }
 
 .footer img {
@@ -14,4 +14,8 @@
 
 .footer a:hover {
   color: grey;
+}
+
+.footer-text {
+  font-size: 1.5rem;
 }
