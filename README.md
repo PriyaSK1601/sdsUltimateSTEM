@@ -1,18 +1,25 @@
 # SDS-ULTIMATE_STEM
-Software Development Studio - Ultimate STEM Project 
+41113 Software Development Studio - Ultimate STEM Project 
+
+Developed by:
+Anna Lazarevic - 24963326
+Julia Pham - 24807606
+Shiva Priya Kadarla - 25050877
+Michaela Sabio - 24632123
+Raizelle Nana - 24825960
+Bao Minh Tam Phuong - 14198612
+Tamara Haque - 24934426
+
 
 Compiling Instructions 
-1. You need to install node.js which you can download using this website (https://nodejs.org/en/download/)
-3. Either download the main branch code with the zip folder and extract or open with github desktop and VScode
-4. Open terminal and do the following commands:
-   cd my-app, 
-   npm install bootstrap@v5.3.3, 
-   npm install --save react-toastify, 
-   npm install firebase
-5. run the program with this command:
-   npm start
-6. The program should open in your browser and if any more errors send thru on discord or just chatgpt the error message
-
-
-
-![25687280027bec6f4f4e31014aec2fb7](https://github.com/user-attachments/assets/ea0285dd-a924-4167-b66f-f214bb131bac)
+1. Download and install Node.js from https://nodejs.org/en/download/. Make sure to enable the option to add it to your system PATH.
+2. Download the project by either cloning the main branch using GitHub Desktop or downloading the ZIP file from GitHub and extracting it to your desired location.
+3. Open the project folder in Visual Studio Code. Make sure the folder contains the package.json file.
+4. Open the terminal in VS Code and navigate to the project directory if you’re not already in it.
+5. Run the following commands one at a time to install dependencies:
+   - npm install bootstrap@v5.3.3
+   - npm install --save react-toastify
+   - npm install firebase
+6. Start the application by running:
+   - npm start
+7. The program should automatically open in your browser at http://localhost:3000.
