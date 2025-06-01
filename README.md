@@ -2,13 +2,13 @@
 41113 Software Development Studio - Ultimate STEM Project 
 
 Developed by:
-Anna Lazarevic - 24963326
-Julia Pham - 24807606
-Shiva Priya Kadarla - 25050877
-Michaela Sabio - 24632123
-Raizelle Nana - 24825960
-Bao Minh Tam Phuong - 14198612
-Tamara Haque - 24934426
+- Anna Lazarevic 24963326
+- Julia Pham 24807606
+- Shiva Priya Kadarla 25050877
+- Michaela Sabio 24632123
+- Raizelle Nana 24825960
+- Bao Minh Tam Phuong 14198612
+- Tamara Haque 24934426
 
 
 Compiling Instructions 
