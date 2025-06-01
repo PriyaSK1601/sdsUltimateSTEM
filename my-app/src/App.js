@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import Navbar from "./components/Navbar";
 import Profile from "./pages/profile";
@@ -7,31 +7,27 @@ import SignUp from "./pages/register";
 import Home from "./pages/Home";
 import Submission from "./pages/Submission";
 import Tournament from "./pages/Tournament";
-import Vote from "./pages/Vote";
 import ForgotPass from "./pages/forgotPass";
 import AdminLogin from "./pages/adminLogin";
 import EditCountdown from "./pages/EditCountdown";
+import ViewAllSubmissions from "./pages/ViewAllSubmissions";
 
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import React, { useEffect } from "react";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { auth } from "./pages/firebase";
-import { Navigate } from "react-router-dom";
-import ViewAllSubmissions from "./pages/ViewAllSubmissions";
 
-//Changed
+import { auth } from "./pages/firebase";
 
 function App() {
   const [user, setUser] = useState();
+  
   useEffect(() => {
     auth.onAuthStateChanged((user) => {
       setUser(user);
     });
-  });
+  }, []);
 
-  //Store submissions here
   const [submissions, setSubmissions] = useState([]);
   const handleNewSubmission = (submissionData) => {
     setSubmissions((prev) => [...prev, submissionData]);
@@ -39,6 +35,7 @@ function App() {
 
   return (
     <div className="App">
+      <ToastContainer />
       <div className="auth-wrapper">
         <div className="auth-inner">
           <Router>
@@ -51,23 +48,16 @@ function App() {
               <Route path="/register" element={<SignUp />} />
               <Route path="/forgotPass" element={<ForgotPass />} />
               <Route path="/adminLogin" element={<AdminLogin />} />
-              <Route path="/submission" element={<Submission onSubmit={handleNewSubmission} />}/>
+              <Route path="/submission" element={<Submission onSubmit={handleNewSubmission} />} />
               <Route path="/tournament" element={<Tournament submissions={submissions} />} />
-              <Route path="/vote" element={<Vote />} />
               <Route path="/edit-countdown" element={<EditCountdown />} />
-              <Route path="/viewAllSubmissions" element={<ViewAllSubmissions/>} />
+              <Route path="/viewAllSubmissions" element={<ViewAllSubmissions />} />
             </Routes>
           </Router>
         </div>
       </div>
     </div>
   );
-}
-{
-  /*<Route
-                    path="/"
-                    element={user ? <Navigate to="/profile" /> : <Login />}
-              />*/
 }
 
 export default App;
