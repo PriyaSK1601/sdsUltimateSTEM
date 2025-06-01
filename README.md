@@ -14,5 +14,3 @@ Compiling Instructions
 6. The program should open in your browser and if any more errors send thru on discord or just chatgpt the error message
 
 
-
-![25687280027bec6f4f4e31014aec2fb7](https://github.com/user-attachments/assets/ea0285dd-a924-4167-b66f-f214bb131bac)
