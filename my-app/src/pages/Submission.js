@@ -8,6 +8,9 @@ import { auth , db } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 function Submission({ onSubmit }) {
   const [title, setTitle] = useState("");
@@ -58,7 +61,7 @@ function Submission({ onSubmit }) {
     }
   };
   
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
   
     if (!title.trim() || !description.trim() || !category) {
@@ -66,14 +69,22 @@ function Submission({ onSubmit }) {
       return;
     }
   
-    axiosPostData();
-  
+    await axiosPostData();  
+
     setTitle("");
     setDescription("");
     setCategory("");
     setImage(null);
-    navigate("/tournament"); 
+    
+    toast.success("Submission successful!", { position: "top-center" });
+
+    setTimeout(() => {
+      navigate("/tournament");
+    }, 2000); 
+    
+
   };
+
 
   const handleImageInput = (event) => {
     const file = event.target.files[0];
