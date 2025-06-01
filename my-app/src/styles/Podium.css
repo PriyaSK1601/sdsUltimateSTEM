@@ -46,11 +46,13 @@
 }
 
 .podium-container .card-content {
-  padding: 1em;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  padding: 1em !important;
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow-y: auto;
+  max-height: none !important;
 }
 
 .podium-container .category-badge {
@@ -65,6 +67,7 @@
 .podium-container .description {
   margin-bottom: 0.5em;
   flex-grow: 1;
+  
 }
 
 .podium-container .left-button {
@@ -91,7 +94,6 @@
   width: auto;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .podium-container .card-container {
     max-width: 90%;
@@ -104,32 +106,5 @@
   
   .podium-container .right-button {
     right: -40px;
-  }
-  
-  .podium-container
-  .left-button img,
-  .right-button img {
-    height: 2em;
-  }
-}
-
-@media (max-width: 576px) {
-  .podium-container .card-container {
-    max-width: 95%;
-    height: 16em;
-  }
-  
-  .podium-container .left-button {
-    left: -30px;
-  }
-  
-  .podium-container .right-button {
-    right: -30px;
-  }
-  
-  .podium-container
-  .left-button img,
-  .right-button img {
-    height: 1.5em;
   }
 }

@@ -123,7 +123,7 @@ function EditCountdown() {
     return () => clearInterval(intervalId);
   }, [isEditing]);
 
-  //
+
   useEffect(() => {
   if (!isEditing) {
     const updatedRounds = [];
@@ -154,7 +154,7 @@ function EditCountdown() {
   };
 
   const validateDates = () => {
-    // Ensure all dates are filled and in chronological order
+    // Ensure all dates are filled
     for (let i = 0; i < rounds.length; i++) {
       if (!rounds[i].targetDate) {
         toast.warning(`Please set a date and time for ${rounds[i].name}`);

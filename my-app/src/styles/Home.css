@@ -58,24 +58,6 @@
   right: -13%;
 }
 
-/* Responsive adjustments */
-/*
-@media (max-width: 1200px) {
-  .circle-container {
-    right: -20%;
-    width: clamp(180px, 18vw, 250px);
-    height: clamp(180px, 18vw, 250px);
-  }
-}
-
-@media (max-width: 992px) {
-  .circle-container {
-    right: -25%;
-    width: clamp(160px, 16vw, 200px);
-    height: clamp(160px, 16vw, 200px);
-  }
-}*/
-
 @media (max-width: 1500px) {
   .circle-container {
     right: -30%;

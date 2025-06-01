@@ -206,7 +206,7 @@ router.post("/tournament", async (req, res) => {
   try {
     const { rounds } = req.body;
 
-    // First clear existing tournament data
+    // Clear existing tournament data
     await schemas.Tournament.deleteMany({});
     //Also clear existing round winners
     await schemas.RoundWinners.deleteMany({}); 
@@ -502,7 +502,7 @@ router.delete("/tournament", async (req, res) => {
   }
 });
 
-// Upload/Update profile photo
+// Upload/update profile photo
 router.post("/profile-photo", upload.single("profilePhoto"), async (req, res) => {
   const { email } = req.body;
 
@@ -556,7 +556,7 @@ router.get("/profile-photo/:email", async (req, res) => {
   }
 });
 
-// Delete profile photo by email
+// Delete profile photo
 router.delete("/profile-photo/:email", async (req, res) => {
   try {
     const result = await schemas.ProfilePhoto.findOneAndDelete({ 

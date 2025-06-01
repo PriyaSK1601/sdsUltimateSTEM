@@ -19,20 +19,3 @@
 .footer-text {
   font-size: 1.5rem;
 }
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .footer-text {
-    font-size: 1.2rem;
-  }
-  
-  .footer img {
-    height: 0.8em;
-  }
-}
-
-@media (max-width: 576px) {
-  .footer-text {
-    font-size: 1rem;
-  }
-}
