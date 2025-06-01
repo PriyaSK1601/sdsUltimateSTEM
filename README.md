@@ -11,12 +11,13 @@ Chris Ferrie
 Team:
 Tamara Haque :
 Bao Minh Tam Phuong :
-Julia Pham :
+Julia Pham : 24807606
 Shiva Priya Kadarla
 Anna Lazarevic : 24963326
 Michaela Sabio :
 Raizelle Nana :
 
+## Getting Started
 1. You need to install node.js which you can download using this website (https://nodejs.org/en/download/)
 2. Either download the main branch code with the zip folder and extract or open with github desktop and VScode
 3. Open terminal and do the following commands:
