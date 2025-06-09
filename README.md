@@ -3,14 +3,18 @@
 
 Client: Chris Ferrie
 
-## Developed by:
+## Developers:
 - Anna Lazarevic 24963326
 - Julia Pham 24807606
 - Shiva Priya Kadarla 25050877
+
+## Testers:
 - Michaela Sabio 24632123
 - Raizelle Nana 24825960
+
+## Business Analyst:
 - Bao Minh Tam Phuong 14198612
-- Tamara Haque 24934426
+- Tamara Haque 24934426 (TL)
 
 
 ## Compiling Instructions 
