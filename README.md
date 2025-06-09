@@ -4,9 +4,9 @@
 Client: Chris Ferrie
 
 ## Developers:
+- Shiva Priya Kadarla 25050877
 - Anna Lazarevic 24963326
 - Julia Pham 24807606
-- Shiva Priya Kadarla 25050877
 
 ## Testers:
 - Michaela Sabio 24632123
