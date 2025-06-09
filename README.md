@@ -2,6 +2,7 @@
 41113 Software Development Studio - Ultimate STEM Project 
 
 Client: Chris Ferrie
+
 Requirements: Creating a tournament-style website with Firebase Authentication and MongoDB database for users to vote on their preferred book ideas.
 
 ## Developers:
