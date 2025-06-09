@@ -2,19 +2,20 @@
 41113 Software Development Studio - Ultimate STEM Project 
 
 Client: Chris Ferrie
+Requirements: Creating a tournament-style website with Firebase Authentication and MongoDB database for users to vote on their preferred book ideas.
 
 ## Developers:
-- Shiva Priya Kadarla 25050877
-- Anna Lazarevic 24963326
-- Julia Pham 24807606
+- Shiva Priya Kadarla 
+- Anna Lazarevic
+- Julia Pham 
 
 ## Testers:
-- Michaela Sabio 24632123
-- Raizelle Nana 24825960
+- Michaela Sabio
+- Raizelle Nana
 
 ## Business Analyst:
-- Bao Minh Tam Phuong 14198612
-- Tamara Haque 24934426 (TL)
+- Bao Minh Tam Phuong
+- Tamara Haque (TL)
 
 
 ## Compiling Instructions 
